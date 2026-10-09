@@ -1,0 +1,97 @@
+{
+  "name": "Javier",
+  "sprite_folder": "assets/characters/javier",
+  "scale": 0.8227,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 66,
+      "hit_offset_y": 110,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 72,
+      "hit_offset_y": 83,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 88,
+      "hit_offset_y": 94,
+      "active_frames": [
+        2,
+        3
+      ],
+      "extra_scale": 1.092
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "low",
+      "projectile_mode": "spin",
+      "trajectory": "bounce",
+      "bounce_damping": 0.55,
+      "kick_height": 271,
+      "gravity_mult": 6
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "extra_scale": 0.9216
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 1.092
+    }
+  },
+  "sounds": {}
+}

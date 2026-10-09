@@ -1,0 +1,93 @@
+{
+  "name": "Noah",
+  "sprite_folder": "assets/characters/noah",
+  "scale": 0.5342,
+  "health": 95,
+  "walk_speed": 4.5,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false
+    },
+    "punch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 8,
+      "reach": 60,
+      "hit_height": 55,
+      "hit_offset_y": 85,
+      "active_frames": [
+        2
+      ]
+    },
+    "kick": {
+      "fps": 12,
+      "loop": false,
+      "damage": 12,
+      "reach": 72,
+      "hit_height": 55,
+      "hit_offset_y": 55,
+      "active_frames": [
+        2
+      ]
+    },
+    "special": {
+      "fps": 12,
+      "loop": false,
+      "damage": 18,
+      "reach": 85,
+      "hit_height": 70,
+      "hit_offset_y": 80,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "ranged": {
+      "fps": 12,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        2
+      ],
+      "launch_height": "high",
+      "speed": 9,
+      "trajectory": "bounce",
+      "bounce_damping": 0.55,
+      "projectile_mode": "random_spin",
+      "loop_sound": true
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 5,
+      "loop": false,
+      "extra_scale": 1.2597
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.7954
+    }
+  },
+  "sounds": {}
+}

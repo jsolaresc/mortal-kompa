@@ -1,0 +1,124 @@
+{
+  "name": "Adrián",
+  "sprite_folder": "assets/characters/adrian",
+  "scale": 0.7286,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "extra_scale": 0.93
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 65,
+      "hit_offset_y": 90,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 70,
+      "hit_offset_y": 110,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 10,
+      "launch_height": "high",
+      "trajectory": "straight",
+      "projectile_mode": "random_spin",
+      "projectile_weights": [
+        0.8,
+        0.2
+      ]
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "extra_scale": 1.15
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 1.07
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 1.4591
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 1.2,
+      "y_offset": [
+        0,
+        60,
+        70,
+        0
+      ],
+      "no_flip": true
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 10,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "random_spin",
+      "projectile_weights": [
+        0.8,
+        0.2
+      ],
+      "extra_scale": 0.7295,
+      "visual_y_offset": 20
+    }
+  },
+  "sounds": {}
+}

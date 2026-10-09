@@ -1,0 +1,108 @@
+{
+  "name": "Sonia",
+  "sprite_folder": "assets/characters/sonia",
+  "scale": 0.9843,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 65,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 80,
+      "hit_height": 65,
+      "hit_offset_y": 75,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 100,
+      "hit_height": 80,
+      "hit_offset_y": 85,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "spin",
+      "loop_sound": true
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "extra_scale": 0.55
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.9
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.9
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.9949
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "spin",
+      "loop_sound": true,
+      "extra_scale": 0.5253,
+      "launch_offset_mult": 1.35
+    }
+  },
+  "sounds": {}
+}

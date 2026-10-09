@@ -1,0 +1,5 @@
+.buildozer/
+bin/
+__pycache__/
+*.pyc
+data/_tower_boss_cache/

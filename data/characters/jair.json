@@ -1,0 +1,112 @@
+{
+  "name": "Jair",
+  "sprite_folder": "assets/characters/jair",
+  "scale": 0.7302,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 65,
+      "hit_offset_y": 108,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 71,
+      "hit_offset_y": 81,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 87,
+      "hit_offset_y": 92,
+      "active_frames": [
+        3,
+        4
+      ]
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "spin",
+      "launch_offset_mult": 1.05
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "extra_scale": 1.1907
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.5615,
+      "y_offset": [
+        0,
+        90,
+        0,
+        90
+      ]
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "spin",
+      "launch_offset_mult": 1.18,
+      "extra_scale": 0.92
+    }
+  },
+  "sounds": {}
+}

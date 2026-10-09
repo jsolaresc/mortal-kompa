@@ -1,0 +1,108 @@
+{
+  "name": "Nico",
+  "sprite_folder": "assets/characters/nico",
+  "scale": 0.8042,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 65,
+      "hit_offset_y": 109,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 71,
+      "hit_offset_y": 82,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 87,
+      "hit_offset_y": 93,
+      "active_frames": [
+        3,
+        4
+      ]
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 22,
+      "launch_height": "high",
+      "trajectory": "straight",
+      "launch_offset_mult": 1.0591,
+      "visual_y_offset": 68
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 1.246
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.6755
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 22,
+      "launch_height": "crouch_mid",
+      "trajectory": "straight",
+      "launch_offset_mult": 1.0591,
+      "visual_y_offset": 68,
+      "extra_scale": 0.5974
+    }
+  },
+  "sounds": {}
+}

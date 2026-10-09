@@ -1,0 +1,103 @@
+{
+  "name": "Ana",
+  "sprite_folder": "assets/characters/ana",
+  "scale": 0.952,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "extra_scale": 0.8832
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 65,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 80,
+      "hit_height": 65,
+      "hit_offset_y": 75,
+      "active_frames": [
+        2
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 100,
+      "hit_height": 80,
+      "hit_offset_y": 85,
+      "active_frames": [
+        3,
+        4
+      ],
+      "extra_scale": 1.05
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high"
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.98
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.98
+    },
+    "win": {
+      "fps": 6,
+      "loop": true
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "extra_scale": 0.7811,
+      "launch_offset_mult": 1.18
+    }
+  },
+  "sounds": {}
+}

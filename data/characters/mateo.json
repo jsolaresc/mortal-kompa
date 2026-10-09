@@ -1,0 +1,105 @@
+{
+  "name": "Mateo",
+  "sprite_folder": "assets/characters/mateo",
+  "scale": 0.3715,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 66,
+      "hit_offset_y": 109,
+      "active_frames": [
+        3
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 71,
+      "hit_offset_y": 82,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 88,
+      "hit_offset_y": 93,
+      "active_frames": [
+        3,
+        4
+      ]
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "spin"
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "extra_scale": 1.4999
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.8832
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 3.0888
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "spin",
+      "extra_scale": 1.748,
+      "launch_offset_mult": 1.35
+    }
+  },
+  "sounds": {}
+}

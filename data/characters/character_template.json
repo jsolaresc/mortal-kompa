@@ -1,0 +1,114 @@
+{
+  "_comentario_1": "Copiá este archivo, renombralo (ej: 'facundo.json') y editá los valores.",
+  "_comentario_2": "sprite_folder debe apuntar a una carpeta en assets/characters/<nombre> con subcarpetas idle, walk, jump, punch, kick, special, ranged, block, hit, ko, cada una con frames 0.png, 1.png, 2.png...",
+  "_comentario_3": "'frames' dentro de cada animación NO hace falta que coincida con la cantidad real de PNG que pongas en la carpeta -- el motor carga TODOS los que encuentre. Ese número solo lo usa el generador de sprites de prueba.",
+  "name": "Nombre Del Personaje",
+  "sprite_folder": "assets/characters/nombre_del_personaje",
+  "scale": 2,
+  "health": 100,
+  "walk_speed": 4,
+  "jump_power": -22,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "frames": 4,
+      "fps": 8,
+      "loop": false
+    },
+    "crouch": {
+      "frames": 2,
+      "fps": 6,
+      "loop": true,
+      "_comentario": "Agacharse SIN cubrirse (tecla 'down' sola). No reduce daño, es solo postura."
+    },
+    "block": {
+      "frames": 2,
+      "fps": 6,
+      "loop": true,
+      "_comentario": "Cubrirse de pie (botón 'block' solo). No se puede caminar mientras se cubre."
+    },
+    "block_crouch": {
+      "frames": 2,
+      "fps": 6,
+      "loop": true,
+      "_comentario": "Cubrirse agachado ('down' + 'block' juntos)."
+    },
+    "win": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "_comentario": "Se reproduce en el que gana un round (por K.O. o por tiempo), durante toda la pantalla de resultado. Si no existe, cae a 'idle' automáticamente."
+    },
+    "ko": {
+      "frames": 5,
+      "fps": 4,
+      "loop": false
+    },
+    "punch": {
+      "frames": 4,
+      "fps": 14,
+      "loop": false,
+      "damage": 8,
+      "reach": 70,
+      "hit_height": 50,
+      "hit_offset_y": 110,
+      "active_frames": [
+        1,
+        2
+      ],
+      "_comentario": "active_frames son los índices de frame (empezando en 0) donde el golpe realmente puede pegar"
+    },
+    "kick": {
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "damage": 12,
+      "reach": 85,
+      "hit_height": 55,
+      "hit_offset_y": 90,
+      "active_frames": [
+        2
+      ]
+    },
+    "special": {
+      "frames": 6,
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 110,
+      "hit_height": 70,
+      "hit_offset_y": 100,
+      "active_frames": [
+        3,
+        4
+      ],
+      "_comentario": "El especial se habilita recién después de RECIBIR 5 golpes (ver constants.SPECIAL_HITS_REQUIRED). Antes de eso, apretar el botón no hace nada."
+    },
+    "ranged": {
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "damage": 5,
+      "active_frames": [
+        2
+      ],
+      "launch_height": "mid",
+      "speed": 9,
+      "_comentario": "Ataque a distancia: menos daño que el puño. 'launch_height' es 'mid' (sale desde la mano, a media altura) o 'low' (sale desde el piso/pie). Se puede esquivar saltando y se bloquea como cualquier golpe. La imagen que se lanza es 'projectile_image' (arriba)."
+    }
+  },
+  "sounds": {
+    "_comentario": "NO HACE FALTA TOCAR ESTO. Por defecto el motor busca los audios solo, en assets/characters/<vos>/sounds/<accion>/ -- creá esa carpeta (intro, punch, kick, special, ranged, hit, block, fall, ko, win, projectile_hit) y tirá ahí los archivos .wav/.mp3/.ogg que quieras, con el nombre que quieras. Un solo archivo = suena siempre. Varios archivos = cada uno tiene 10% de probabilidad independiente de sonar (SOUND_RANDOM_CHANCE en engine/constants.py). 'win' es especial: si hay varios, SIEMPRE suena uno al azar (nunca queda en silencio). Todo esto es opcional -- un personaje sin carpeta 'sounds/' o con acciones sin carpeta usa los sonidos genéricos de assets/sounds/sfx/ donde aplica (hit/block/fall/ranged/projectile_hit), o directamente no suena nada (punch/kick/special/intro/ko/win).",
+    "_comentario_override": "Este bloque de JSON es SOLO para el caso raro en que necesites apuntar a un archivo fuera de la carpeta de acción de arriba. Si declarás una clave acá (string o lista), GANA por sobre la carpeta automática para esa clave puntual. Podés borrar todo este objeto y dejar '\"sounds\": {}' tranquilamente."
+  }
+}

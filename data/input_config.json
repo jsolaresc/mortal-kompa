@@ -1,0 +1,66 @@
+{
+  "players": [
+    {
+      "keys": {
+        "left": "a",
+        "right": "d",
+        "up": "w",
+        "down": "s",
+        "punch": "j",
+        "kick": "k",
+        "special": "l",
+        "ranged": "i",
+        "block": "o",
+        "start": "return"
+      },
+      "joystick": {
+        "index": 0,
+        "axis_x": 0,
+        "axis_y": 1,
+        "hat": 0,
+        "deadzone": 0.35,
+        "buttons": {
+          "kick": 0,
+          "ranged": 1,
+          "punch": 2,
+          "special": 3,
+          "block": 5,
+          "start": 7,
+          "confirm": 0,
+          "cancel": 1
+        }
+      }
+    },
+    {
+      "keys": {
+        "left": "left",
+        "right": "right",
+        "up": "up",
+        "down": "down",
+        "punch": "1",
+        "kick": "2",
+        "special": "5",
+        "ranged": "3",
+        "block": "4",
+        "start": "return"
+      },
+      "joystick": {
+        "index": 1,
+        "axis_x": 0,
+        "axis_y": 1,
+        "hat": 0,
+        "deadzone": 0.35,
+        "buttons": {
+          "kick": 0,
+          "ranged": 1,
+          "punch": 2,
+          "special": 3,
+          "block": 5,
+          "start": 7,
+          "confirm": 0,
+          "cancel": 1
+        }
+      }
+    }
+  ]
+}

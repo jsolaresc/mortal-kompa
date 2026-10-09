@@ -1,0 +1,108 @@
+{
+  "name": "Omar",
+  "sprite_folder": "assets/characters/omar",
+  "scale": 0.3282,
+  "health": 100,
+  "walk_speed": 4,
+  "projectile_image": "projectile.png",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "extra_scale": 1.05
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 62,
+      "hit_offset_y": 104,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 68,
+      "hit_offset_y": 78,
+      "active_frames": [
+        2,
+        3
+      ]
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 83,
+      "hit_offset_y": 88,
+      "active_frames": [
+        3,
+        4
+      ],
+      "extra_scale": 0.97
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "random_spin"
+    },
+    "block": {
+      "fps": 6,
+      "loop": true
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "extra_scale": 2.3587
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 0.92
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "extra_scale": 2.6266
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "random_spin",
+      "extra_scale": 2.1987,
+      "launch_offset_mult": 1.18
+    }
+  },
+  "sounds": {}
+}
