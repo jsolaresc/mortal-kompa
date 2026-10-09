@@ -89,3 +89,16 @@ jobs:
         with:
           name: build-log
           path: build.log
+
+      - name: Subir final del log a la rama build-logs (si falló)
+        if: failure()
+        run: |
+          tail -n 600 build.log > /tmp/build-tail.log || true
+          git config user.name "build-bot"
+          git config user.email "build-bot@users.noreply.github.com"
+          git checkout --orphan build-logs
+          git rm -rf --cached . > /dev/null
+          cp /tmp/build-tail.log build-tail.log
+          git add build-tail.log
+          git commit -m "log run ${{ github.run_number }}"
+          git push -f origin build-logs
