@@ -481,33 +481,66 @@ class TouchControls:
             rr = r * (0.93 if is_pressed else 1.0)
             self._blit_center(surface, self._face(name, rr, 240 if is_pressed else 165), (bx, by))
 
+    def _disc(self, name):
+        """(dx, dy, radio) del disco principal del PNG, en fracciones del radio
+        del botón. Mide el ancho/alto opaco en los ejes que cruzan el centro."""
+        key = ("disc", name)
+        if key in self._surf_cache:
+            return self._surf_cache[key]
+        res = (0.0, 0.0, 1.0)
+        path = os.path.join(TOUCH_DIR, f"{name}.png")
+        try:
+            img = pygame.image.load(path)
+            w, h = img.get_size()
+            cx, cy = w // 2, h // 2
+            for _ in range(3):
+                xs = [x for x in range(w) if img.get_at((x, cy)).a > 40]
+                ys = [y for y in range(h) if img.get_at((cx, y)).a > 40]
+                if not xs or not ys:
+                    break
+                cx, cy = (xs[0] + xs[-1]) // 2, (ys[0] + ys[-1]) // 2
+            half = max(w, h) / 2
+            rad = min(xs[-1] - xs[0], ys[-1] - ys[0]) / 2
+            res = ((cx - w / 2) / half, (cy - h / 2) / half, rad / half)
+        except (pygame.error, OSError, NameError, UnboundLocalError):
+            pass
+        self._surf_cache[key] = res
+        return res
+
     def _draw_special(self, surface, bx, by, r, is_pressed):
         req = C.SPECIAL_HITS_REQUIRED
         charge = max(0, min(req, self.special_charge))
         ready = charge >= req
         u = self._u
+        rr = r * (0.93 if is_pressed else 1.0)
+        # se mide el círculo real del PNG (las llamas que sobresalen no cuentan)
+        ox, oy, fr = self._disc("special" if ready else "special_locked")
+        cx, cy = bx + ox * rr, by + oy * rr
+        disc_r = fr * rr
+        width = max(3, int(u(5)))
         if ready:
             pulse = 0.5 + 0.5 * math.sin(time.time() * 7)
-            glow = self._circle_surface(r * (1.18 + 0.06 * pulse), (255, 220, 60), int(70 + 60 * pulse))
-            self._blit_center(surface, glow, (bx, by))
-        rr = r * (0.93 if is_pressed else 1.0)
+            glow = self._circle_surface(disc_r + width + u(4 + 3 * pulse), (255, 220, 60), int(60 + 50 * pulse))
+            self._blit_center(surface, glow, (cx, cy))
         if ready:
             face = self._face("special", rr, 245 if is_pressed else 215)
         else:
             face = self._face("special_locked", rr, 165)
         self._blit_center(surface, face, (bx, by))
-        # aro de carga: 5 segmentos alrededor del botón
-        ring_r = rr + u(7)
-        rect = pygame.Rect(0, 0, ring_r * 2, ring_r * 2)
-        rect.center = (int(bx), int(by))
-        gap = 0.12
+        # aro de carga: 5 segmentos pegados al borde del disco
+        r_in = disc_r + u(1)
+        r_out = r_in + width
+        gap = 0.10
         seg = (2 * math.pi) / req
         for i in range(req):
-            start = math.pi / 2 - (i + 1) * seg + gap / 2
-            end = math.pi / 2 - i * seg - gap / 2
-            col = (255, 215, 50) if i < charge else (60, 60, 70)
-            pygame.draw.arc(surface, col, rect, start, end, max(3, int(u(7))))
-
+            a0 = -math.pi / 2 + i * seg + gap / 2  # arranca arriba, sentido horario
+            a1 = a0 + seg - gap
+            n = max(6, int(24 / req * 4))
+            pts = [(cx + r_out * math.cos(a0 + (a1 - a0) * k / n), cy + r_out * math.sin(a0 + (a1 - a0) * k / n)) for k in range(n + 1)]
+            pts += [(cx + r_in * math.cos(a1 - (a1 - a0) * k / n), cy + r_in * math.sin(a1 - (a1 - a0) * k / n)) for k in range(n + 1)]
+            col = (255, 215, 50) if i < charge else (55, 55, 65)
+            pygame.draw.polygon(surface, col, pts)
+            pygame.draw.aalines(surface, col, True, pts)
 
 # Botones editables (assets/ui/touch/<nombre>.png). Cualquier tamaño:
 # se escalan solos al tamaño del botón (cuadrados, con transparencia).
