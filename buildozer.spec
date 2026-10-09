@@ -28,6 +28,9 @@ android.archs = arm64-v8a, armeabi-v7a
 android.accept_sdk_license = True
 android.allow_backup = False
 p4a.bootstrap = sdl2
+# fijado: pygame 2.1.0 solo compila con Python <= 3.10 (p4a nuevo trae 3.14)
+p4a.branch = v2023.09.16
+android.ndk = 25b
 
 [buildozer]
 log_level = 2

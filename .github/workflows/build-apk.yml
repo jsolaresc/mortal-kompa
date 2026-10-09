@@ -49,9 +49,9 @@ jobs:
           path: |
             ~/.buildozer
             .buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}-v1
+          key: buildozer-${{ runner.os }}-v2-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-${{ runner.os }}-
+            buildozer-${{ runner.os }}-v2-
 
       - name: Llave de firma fija (para poder actualizar el juego sin desinstalarlo)
         run: |
