@@ -17,7 +17,7 @@ presplash.filename = %(source.dir)s/build_android/presplash.png
 android.presplash_color = #141418
 
 # Apaisado (se puede girar el celular para cualquiera de los dos lados)
-orientation = sensorLandscape
+orientation = landscape, landscape-reverse
 fullscreen = 1
 
 # Red local (multijugador WiFi) + mantener la pantalla prendida
