@@ -1,0 +1,19 @@
+Botones táctiles de Mortal Kompa (Android)
+=========================================
+Editá estos PNG como quieras (cualquier tamaño, cuadrados, con
+transparencia) y ponelos en assets/ui/touch/ con el MISMO nombre.
+El juego los escala solo al tamaño de cada botón. Si borrás uno, el
+juego vuelve a dibujar el de fábrica.
+
+punch.png          Puño
+kick.png           Patada
+ranged.png         Distancia
+block.png          Bloqueo
+special.png        Especial HABILITADO (5 golpes recibidos; el juego le suma un brillo)
+special_locked.png Especial BLOQUEADO (el aro de carga de 5 partes lo dibuja el juego alrededor)
+pause.png          Pausa
+joystick_base.png  Base del joystick (aro)
+joystick_knob.png  Perilla del joystick
+
+El juego los dibuja semitransparentes; al apretarlos se ven opacos y un
+poco más chicos.
