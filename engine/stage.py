@@ -168,9 +168,9 @@ def _target_world_w(src_w, src_h):
     (un escenario más 'cuadrado' que 16:9 simplemente se estira para
     llenarla, como pasaba antes de que existiera esta cuenta)."""
     if not src_w or not src_h:
-        return C.SCREEN_W
+        return C.LOGIC_W
     w = round(src_w * C.SCREEN_H / src_h)
-    cap = C.SCREEN_W * MAX_WORLD_W_MULT
+    cap = C.LOGIC_W * MAX_WORLD_W_MULT
     if w > cap:
         print(
             f"[AVISO] Un escenario pidió un mundo de {w}px de ancho (más de "
@@ -178,7 +178,24 @@ def _target_world_w(src_w, src_h):
             f"para no gastar memoria de más."
         )
         w = cap
-    return max(C.SCREEN_W, w)
+    return max(C.LOGIC_W, w)
+
+
+def _cover(surface, width, height, anchor_y=0.7):
+    """Escala 'surface' para CUBRIR (width x height) sin deformarla y
+    recorta lo que sobra. Si sobra alto, se recorta más de arriba que de
+    abajo (anchor_y) para no perder el piso del escenario."""
+    sw, sh = surface.get_size()
+    if (sw, sh) == (width, height):
+        return surface
+    f = max(width / sw, height / sh)
+    nw, nh = max(width, int(round(sw * f))), max(height, int(round(sh * f)))
+    scaled = pygame.transform.smoothscale(surface, (nw, nh))
+    x0 = (nw - width) // 2
+    y0 = int((nh - height) * anchor_y)
+    out = pygame.Surface((width, height)).convert()
+    out.blit(scaled, (0, 0), area=pygame.Rect(x0, y0, width, height))
+    return out
 
 
 def display_name(path):
@@ -229,7 +246,7 @@ class Stage:
         # 40:9 -- ver _target_world_size() y get_camera_x() más abajo).
         # Por defecto, hasta que se calcule según el archivo real, es
         # igual a la pantalla (sin scroll posible).
-        self.world_w = C.SCREEN_W
+        self.world_w = C.LOGIC_W
         # Posición X de la cámara -- la mantiene actualizada
         # main.update_camera() cuadro a cuadro (frenando a los dos
         # peleadores contra ESTA ventana, la del cuadro anterior, antes
@@ -251,7 +268,10 @@ class Stage:
             if ext in IMAGE_EXTS:
                 raw = pygame.image.load(path).convert()
                 self.world_w = _target_world_w(raw.get_width(), raw.get_height())
-                self.frames = [pygame.transform.scale(raw, (self.world_w, C.SCREEN_H))]
+                # el cuadro dibujado es un poco más ancho que el mundo en
+                # pantallas anchas (VIEW_PAD de cada lado, ver constants):
+                # se "cubre" sin deformar la imagen
+                self.frames = [_cover(raw, self.world_w + 2 * C.VIEW_PAD, C.SCREEN_H)]
             elif ext in GIF_EXTS:
                 self.frames = self._load_gif(path)
             elif ext in VIDEO_EXTS:
@@ -260,10 +280,10 @@ class Stage:
             print(f"[AVISO] No pude cargar el escenario '{path}': {e}")
 
         if not self.frames:
-            fallback = pygame.Surface((C.SCREEN_W, C.SCREEN_H))
+            self.world_w = C.LOGIC_W
+            fallback = pygame.Surface((self.world_w + 2 * C.VIEW_PAD, C.SCREEN_H))
             fallback.fill((40, 40, 55))
             self.frames = [fallback]
-            self.world_w = C.SCREEN_W
 
     def _load_gif(self, path):
         from PIL import Image
@@ -376,29 +396,25 @@ class Stage:
         más allá de los bordes del escenario. Si el escenario es 16:9
         normal (world_w == SCREEN_W), siempre da 0 (no hay margen para
         scrollear, se ve entero, como toda la vida)."""
-        max_cam = max(0, self.world_w - C.SCREEN_W)
-        cam_x = target_mid_x - C.SCREEN_W / 2
+        max_cam = max(0, self.world_w - C.LOGIC_W)
+        cam_x = target_mid_x - C.LOGIC_W / 2
         return max(0, min(max_cam, cam_x))
 
     def draw(self, surface, camera_x=0):
         frame = self.frames[self.frame_index]
-        if self._store_size is not None and frame.get_size() != (self.world_w, C.SCREEN_H):
-            # El cuadro se guardó más chico que la pantalla (ver
-            # VIDEO_STORE_W) -- hay que escalarlo para arriba antes de
-            # dibujarlo. Se cachea por índice de cuadro para no volver
-            # a escalar de nuevo mientras el video no cambie de cuadro
-            # (el video anima mucho más lento que los 60fps del juego).
+        full = (self.world_w + 2 * C.VIEW_PAD, C.SCREEN_H)
+        if frame.get_size() != full:
+            # Cuadro de video/GIF guardado más chico (ver VIDEO_STORE_W) o
+            # de otro tamaño: se escala al tamaño dibujado, cacheado por
+            # índice de cuadro para no repetir el escalado en cada cuadro.
             if self._scaled_cache_index != self.frame_index:
-                self._scaled_cache_surf = pygame.transform.smoothscale(frame, (self.world_w, C.SCREEN_H))
+                self._scaled_cache_surf = pygame.transform.smoothscale(frame, full)
                 self._scaled_cache_index = self.frame_index
             frame = self._scaled_cache_surf
-        if self.world_w <= C.SCREEN_W:
-            # Caso de siempre (16:9 normal): el cuadro YA mide exactamente
-            # SCREEN_W, no hay nada que recortar.
-            surface.blit(frame, (0, 0))
-        else:
-            area = pygame.Rect(int(camera_x), 0, C.SCREEN_W, C.SCREEN_H)
-            surface.blit(frame, (0, 0), area=area)
+        # El cuadro mide world_w + 2*VIEW_PAD; la ventana visible arranca
+        # VIEW_PAD antes de la cámara de pelea (que es de LOGIC_W de ancho).
+        area = pygame.Rect(int(camera_x), 0, C.SCREEN_W, C.SCREEN_H)
+        surface.blit(frame, (0, 0), area=area)
 
 
 class _StageThumbnail:
@@ -421,11 +437,11 @@ def _center_crop_to_screen(surface, world_w):
     mismo que se va a ver apenas arranca la pelea (la cámara arranca
     centrada), en vez de achatar todo el ancho panorámico dentro de un
     recuadro 16:9 (se vería estirado/aplastado)."""
-    if world_w <= C.SCREEN_W:
+    if world_w <= C.LOGIC_W:
         return surface
-    x0 = (world_w - C.SCREEN_W) // 2
-    cropped = pygame.Surface((C.SCREEN_W, C.SCREEN_H))
-    cropped.blit(surface, (0, 0), area=pygame.Rect(x0, 0, C.SCREEN_W, C.SCREEN_H))
+    x0 = (world_w - C.LOGIC_W) // 2
+    cropped = pygame.Surface((C.LOGIC_W, C.SCREEN_H))
+    cropped.blit(surface, (0, 0), area=pygame.Rect(x0, 0, C.LOGIC_W, C.SCREEN_H))
     return cropped
 
 

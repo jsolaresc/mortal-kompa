@@ -125,22 +125,23 @@ def device_name():
         return "PC"
 
 
-def logical_display_size(game_w, game_h):
-    """Tamaño LÓGICO de la ventana real: misma altura que el lienzo del
-    juego, y el ancho que corresponda al aspecto real de la pantalla
-    (nunca más angosto que el lienzo)."""
+def screen_aspect():
+    """Aspecto (ancho/alto) de la pantalla real, apaisada. En PC normal
+    siempre 16:9 (la ventana de siempre)."""
+    if TOUCH_SIM and not IS_ANDROID:
+        return SIM_ASPECT
+    if not IS_ANDROID:
+        return 16 / 9
     import pygame
 
-    if TOUCH_SIM and not IS_ANDROID:
-        return max(game_w, round(game_h * SIM_ASPECT)), game_h
     try:
+        pygame.display.init()
         info = pygame.display.Info()
         w, h = info.current_w, info.current_h
     except Exception:
         w, h = 0, 0
     if not w or not h:
-        return game_w, game_h
+        return 16 / 9
     if h > w:
         w, h = h, w  # el juego va siempre apaisado
-    aspect = w / h
-    return max(game_w, round(game_h * aspect)), game_h
+    return max(16 / 9, min(w / h, 2.4))

@@ -136,7 +136,7 @@ class HostLobby:
 # ======================================================================
 # Buscar partida (invitado)
 # ======================================================================
-KEYPAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "<", "OK"]
+KEYPAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "<", "BACK", "OK"]
 
 
 class JoinScreen:
@@ -223,15 +223,22 @@ class JoinScreen:
         y0 = C.scaled(175)
         rects = []
         for i, k in enumerate(KEYPAD):
-            if k == "OK":
-                r = pygame.Rect(x0, y0 + 4 * (size + gap), total_w, size)
+            row_w = total_w + 2 * size
+            half = (row_w - gap) // 2
+            if k == "BACK":
+                r = pygame.Rect(x0 - size, y0 + 4 * (size + gap), half, size)
+            elif k == "OK":
+                r = pygame.Rect(x0 - size + half + gap, y0 + 4 * (size + gap), half, size)
             else:
                 r = pygame.Rect(x0 + (i % cols) * (size + gap), y0 + (i // cols) * (size + gap), size, size)
             rects.append(r)
         return rects
 
     def _press_key(self, k):
-        if k == "<":
+        if k == "BACK":
+            self.keypad = False
+            self.error = ""
+        elif k == "<":
             self.ip_text = self.ip_text[:-1]
         elif k == "OK":
             ip = self.ip_text.strip(".")
@@ -289,7 +296,7 @@ class JoinScreen:
             for i, r in enumerate(self._key_rects()):
                 sel = i == self.kp_index
                 pygame.draw.rect(surface, (70, 70, 85) if not sel else (90, 150, 230), r, border_radius=C.scaled(8))
-                label = {"<": "<", "OK": "CONECTAR"}.get(KEYPAD[i], KEYPAD[i])
+                label = {"<": "<", "OK": "CONECTAR", "BACK": "VOLVER"}.get(KEYPAD[i], KEYPAD[i])
                 img = ui.font_small.render(label, True, C.WHITE)
                 surface.blit(img, img.get_rect(center=r.center))
             if self.error:
@@ -523,15 +530,15 @@ class ClientSession:
     # --------------------------------------------------------------
     def touch_mode(self):
         if self._leave_menu is not None:
-            return touch_mod.MODE_MENU
+            return touch_mod.MODE_NONE
         sc = self.scene
         snap = self.client.snapshot or {}
         if sc == "fight":
             ov = snap.get("ov")
             if ov and ov[0] in ("end", "pause"):
-                return touch_mod.MODE_MENU
+                return touch_mod.MODE_NONE
             return touch_mod.MODE_FIGHT if self.my_slot >= 0 else touch_mod.MODE_NONE
-        return touch_mod.MODE_MENU
+        return touch_mod.MODE_NONE
 
     def special_charge(self):
         snap = self.client.snapshot or {}
@@ -562,23 +569,19 @@ class ClientSession:
             cs.cursor = list(snap.get("cur", [0, 1]))
             cs.confirmed = list(snap.get("conf", [False, False]))
             cs.choices = list(snap.get("ch", [None, None]))
+            cs.touch_hint = "Sos J2 (rojo): tocá un luchador para verlo y otra vez para elegirlo"
             cs.draw(surface, ui)
-            you = "Sos J2 (rojo): tocá tu personaje dos veces o usá el joystick + OK"
-            t = ui.font_tiny.render(you, True, C.WHITE)
-            surface.blit(t, t.get_rect(center=(C.SCREEN_W // 2, C.SCREEN_H - C.scaled(52))))
         elif sc == "ss":
             if self._stagesel is None:
                 self._stagesel = StageSelect(list_stages())
             self._stagesel.index = snap.get("i", 0)
+            self._stagesel.touch_hint = "El anfitrión está eligiendo el escenario..."
             self._stagesel.draw(surface, ui)
-            ui.draw_overlay(surface, alpha=60)
-            t = ui.font_small.render("El anfitrión está eligiendo el escenario...", True, C.YELLOW)
-            surface.blit(t, t.get_rect(center=(C.SCREEN_W // 2, C.SCREEN_H - C.scaled(55))))
+            if not ui.touch_lists:
+                ui.draw_touch_hint(surface, self._stagesel.touch_hint)
         elif sc == "pick":
             if self._pick is not None:
                 self._pick.draw(surface, ui)
-                t = ui.font_tiny.render("Elegí tu luchador para el torneo", True, C.WHITE)
-                surface.blit(t, t.get_rect(center=(C.SCREEN_W // 2, C.SCREEN_H - C.scaled(52))))
             else:
                 ui.draw_screen_background(surface, ui.character_selection_background)
                 ui.draw_center_text(surface, "¡Listo!", C.YELLOW)
@@ -601,7 +604,7 @@ class ClientSession:
             ch = self._chars.get(snap.get("json"))
             if ch:
                 ch.state = C.STATE_WIN
-                ch.x, ch.y = C.SCREEN_W // 2, C.GROUND_Y
+                ch.x, ch.y = C.LOGIC_W // 2, C.GROUND_Y
                 ch.mystery = False
                 ch.hit_flash_timer = 0
                 ch.facing = 1
@@ -657,7 +660,7 @@ class ClientSession:
             img = Projectile._load_image(path) if path else Projectile._default_image()
             if facing == -1:
                 img = pygame.transform.flip(img, True, False)
-            surface.blit(img, img.get_rect(center=(x - cam, y - voff)))
+            surface.blit(img, img.get_rect(center=(x - cam + C.VIEW_PAD, y - voff)))
         hud = snap.get("hud", [C.ROUND_TIME, 0, 0])
         ui.draw_hud(surface, p1, p2, hud[0], hud[1], hud[2])
         ov = snap.get("ov")

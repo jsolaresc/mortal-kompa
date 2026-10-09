@@ -84,7 +84,7 @@ def _cap_ko_frame_size(frames):
     alguno se pasa, se reescala SOLO la animación de K.O. por un factor
     parejo (mantiene la proporción entre frames) -- el resto de las
     animaciones del personaje quedan intactas."""
-    max_w = int(C.SCREEN_W * C.KO_MAX_WIDTH_FRAC)
+    max_w = int(C.LOGIC_W * C.KO_MAX_WIDTH_FRAC)
     max_h = C.GROUND_Y - C.scaled(10)
     biggest_w = 0
     biggest_h = 0
@@ -1113,7 +1113,9 @@ class Character:
     # Dibujo
     # ------------------------------------------------------------------
     def draw(self, surface, camera_x=0):
-        screen_x = self.x - camera_x
+        # VIEW_PAD: en pantallas más anchas que 16:9 la ventana de pelea
+        # queda centrada en el lienzo (ver C.set_resolution)
+        screen_x = self.x - camera_x + C.VIEW_PAD
         anim = self.animations.get(self.state)
         frame = anim.current_frame() if anim else None
         if frame is None:

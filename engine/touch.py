@@ -129,7 +129,9 @@ class TouchControls:
             ("confirm", dw - u(120), dh - u(125), u(78)),
             ("cancel", dw - u(275), dh - u(78), u(54)),
         ]
-        self.pause_button = ("start", dw - u(48), u(46), u(34))
+        # pausa: centrada, justo debajo del timer (arriba a los costados
+        # están las barras de vida, que ahora llegan al borde de la pantalla)
+        self.pause_button = ("start", dw / 2, u(122), u(30))
 
     def buttons(self):
         if self.mode == MODE_FIGHT:
@@ -363,16 +365,92 @@ class TouchControls:
     def _pressed_actions(self):
         return {f["action"] for f in self.fingers.values() if f["role"] == "btn"}
 
+    # ------------------------------------------------------------------
+    # "Caras" de los botones: PNG editables en assets/ui/touch/ (ver
+    # TOUCH_FACES más abajo). Si un PNG no existe, se dibuja por código
+    # (el mismo diseño con el que se generaron los PNG de fábrica, ver
+    # render_default_face / tools/export_touch_buttons.py).
+    # ------------------------------------------------------------------
+    def render_default_face(self, name, r):
+        """Dibujo de fábrica de cada botón, opaco, de radio r."""
+        size = int(2 * r) + 4
+        s = pygame.Surface((size, size), pygame.SRCALPHA)
+        c = (size / 2, size / 2)
+        ring_w = max(2, int(r * 0.045))
+        if name == "joystick_base":
+            disk = self._circle_surface(r, (20, 20, 28), 200, ring=((255, 255, 255, 220), ring_w))
+            s.blit(disk, disk.get_rect(center=c))
+            for ang in (0, 90, 180, 270):
+                a = math.radians(ang)
+                cx = c[0] + math.cos(a) * r * 0.78
+                cy = c[1] + math.sin(a) * r * 0.78
+                sz = r * 0.095
+                pts = [
+                    (cx + math.cos(a) * sz, cy + math.sin(a) * sz),
+                    (cx + math.cos(a + 2.4) * sz, cy + math.sin(a + 2.4) * sz),
+                    (cx + math.cos(a - 2.4) * sz, cy + math.sin(a - 2.4) * sz),
+                ]
+                pygame.draw.polygon(s, (255, 255, 255, 230), pts)
+            return s
+        if name == "joystick_knob":
+            disk = self._circle_surface(r, (235, 235, 240), 255, ring=((40, 40, 50, 230), ring_w))
+            s.blit(disk, disk.get_rect(center=c))
+            return s
+        if name == "special_locked":
+            color, glyph, label, gcol = (95, 95, 105), "lock", None, (230, 230, 235)
+        elif name == "special":
+            color, glyph, label, gcol = BTN_COLORS["special"], "special", BTN_LABELS["special"], (40, 30, 0)
+        elif name == "pause":
+            color, glyph, label, gcol = BTN_COLORS["start"], "start", None, (255, 255, 255)
+        else:
+            color, glyph, label, gcol = BTN_COLORS.get(name, (120, 120, 130)), name, BTN_LABELS.get(name), (255, 255, 255)
+        disk = self._circle_surface(r, color, 255, ring=((255, 255, 255, 235), ring_w))
+        s.blit(disk, disk.get_rect(center=c))
+        g = self._glyph(glyph, r * (0.62 if glyph == "lock" else 0.75), gcol)
+        s.blit(g, g.get_rect(center=(c[0], c[1] - (r * 0.12 if label else 0))))
+        if label:
+            t = self._font(r * 0.24).render(label, True, gcol)
+            s.blit(t, t.get_rect(center=(c[0], c[1] + r * 0.55)))
+        return s
+
+    def _face(self, name, r, alpha=255):
+        """Superficie lista para dibujar del botón 'name' con radio r."""
+        r = max(4, int(r))
+        key = ("face", name, r, alpha)
+        surf = self._surf_cache.get(key)
+        if surf is not None:
+            return surf
+        base_key = ("face", name, r, 255)
+        base = self._surf_cache.get(base_key)
+        if base is None:
+            path = os.path.join(TOUCH_DIR, f"{name}.png")
+            base = None
+            if os.path.isfile(path):
+                try:
+                    img = pygame.image.load(path).convert_alpha()
+                    w, h = img.get_size()
+                    f = (2 * r) / max(w, h)
+                    base = pygame.transform.smoothscale(img, (max(1, int(w * f)), max(1, int(h * f))))
+                except pygame.error:
+                    base = None
+            if base is None:
+                base = self.render_default_face(name, r)
+            self._surf_cache[base_key] = base
+        if alpha >= 255:
+            return base
+        surf = base.copy()
+        surf.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+        self._surf_cache[key] = surf
+        return surf
+
     def draw(self, surface):
         if self.mode == MODE_NONE:
             return
         pressed = self._pressed_actions()
-        u = self._u
 
         if self.mode == MODE_SPECTATE:
             for action, bx, by, r in self.buttons():
-                self._blit_center(surface, self._circle_surface(r, BTN_COLORS["start"], 150, ring=((255, 255, 255, 170), u(3))), (bx, by))
-                self._blit_center(surface, self._glyph(action, r * 0.75), (bx, by))
+                self._blit_center(surface, self._face("pause", r, 170), (bx, by))
             return
 
         # --- joystick ---
@@ -385,44 +463,23 @@ class TouchControls:
             if d > lim:
                 dx, dy = dx * lim / d, dy * lim / d
             knob = (base[0] + dx, base[1] + dy)
-            alpha_base, alpha_knob = 90, 200
+            alpha_base, alpha_knob = 150, 220
         else:
             base = self.joy_default
             knob = base
-            alpha_base, alpha_knob = 55, 110
-        self._blit_center(surface, self._circle_surface(self.joy_r, (20, 20, 28), alpha_base, ring=((255, 255, 255, 120), u(3))), base)
-        # flechitas de dirección en el aro
-        arrow_col = (255, 255, 255, 150)
-        for ang in (0, 90, 180, 270):
-            a = math.radians(ang)
-            cx = base[0] + math.cos(a) * self.joy_r * 0.78
-            cy = base[1] + math.sin(a) * self.joy_r * 0.78
-            sz = u(10)
-            pts = [
-                (cx + math.cos(a) * sz, cy + math.sin(a) * sz),
-                (cx + math.cos(a + 2.4) * sz, cy + math.sin(a + 2.4) * sz),
-                (cx + math.cos(a - 2.4) * sz, cy + math.sin(a - 2.4) * sz),
-            ]
-            pygame.draw.polygon(surface, arrow_col, pts)
-        self._blit_center(surface, self._circle_surface(self.knob_r, (235, 235, 240), alpha_knob, ring=((40, 40, 50, 180), u(2))), knob)
+            alpha_base, alpha_knob = 95, 120
+        self._blit_center(surface, self._face("joystick_base", self.joy_r, alpha_base), base)
+        self._blit_center(surface, self._face("joystick_knob", self.knob_r, alpha_knob), knob)
 
         # --- botones ---
         for action, bx, by, r in self.buttons():
             is_pressed = action in pressed
-            color = BTN_COLORS.get(action, (120, 120, 130))
             if action == "special" and self.mode == MODE_FIGHT and self.show_special:
                 self._draw_special(surface, bx, by, r, is_pressed)
                 continue
-            alpha = 230 if is_pressed else 150
+            name = "pause" if action == "start" else action
             rr = r * (0.93 if is_pressed else 1.0)
-            self._blit_center(surface, self._circle_surface(rr, color, alpha, ring=((255, 255, 255, 170), u(3))), (bx, by))
-            g = self._glyph(action, rr * 0.75)
-            self._blit_center(surface, g, (bx, by - (rr * 0.12 if action not in ("start",) else 0)))
-            label = BTN_LABELS.get(action)
-            if label and action != "start":
-                f = self._font(rr * 0.24)
-                t = f.render(label, True, (255, 255, 255))
-                self._blit_center(surface, t, (bx, by + rr * 0.55))
+            self._blit_center(surface, self._face(name, rr, 240 if is_pressed else 165), (bx, by))
 
     def _draw_special(self, surface, bx, by, r, is_pressed):
         req = C.SPECIAL_HITS_REQUIRED
@@ -433,14 +490,13 @@ class TouchControls:
             pulse = 0.5 + 0.5 * math.sin(time.time() * 7)
             glow = self._circle_surface(r * (1.18 + 0.06 * pulse), (255, 220, 60), int(70 + 60 * pulse))
             self._blit_center(surface, glow, (bx, by))
-            color = BTN_COLORS["special"]
-            alpha = 240 if is_pressed else 210
-        else:
-            color = (95, 95, 105)
-            alpha = 150
         rr = r * (0.93 if is_pressed else 1.0)
-        self._blit_center(surface, self._circle_surface(rr, color, alpha, ring=((255, 255, 255, 120), u(3))), (bx, by))
-        # aro de carga: 5 segmentos
+        if ready:
+            face = self._face("special", rr, 245 if is_pressed else 215)
+        else:
+            face = self._face("special_locked", rr, 165)
+        self._blit_center(surface, face, (bx, by))
+        # aro de carga: 5 segmentos alrededor del botón
         ring_r = rr + u(7)
         rect = pygame.Rect(0, 0, ring_r * 2, ring_r * 2)
         rect.center = (int(bx), int(by))
@@ -449,18 +505,17 @@ class TouchControls:
         for i in range(req):
             start = math.pi / 2 - (i + 1) * seg + gap / 2
             end = math.pi / 2 - i * seg - gap / 2
-            filled = i < charge
-            col = (255, 215, 50) if filled else (60, 60, 70)
+            col = (255, 215, 50) if i < charge else (60, 60, 70)
             pygame.draw.arc(surface, col, rect, start, end, max(3, int(u(7))))
-        if ready:
-            g = self._glyph("special", rr * 0.75, (40, 30, 0))
-        else:
-            g = self._glyph("lock", rr * 0.62, (230, 230, 235))
-        self._blit_center(surface, g, (bx, by - rr * 0.1))
-        f = self._font(rr * 0.24)
-        txt = BTN_LABELS["special"] if ready else f"{charge}/{req}"
-        t = f.render(txt, True, (40, 30, 0) if ready else (255, 255, 255))
-        self._blit_center(surface, t, (bx, by + rr * 0.55))
+
+
+# Botones editables (assets/ui/touch/<nombre>.png). Cualquier tamaño:
+# se escalan solos al tamaño del botón (cuadrados, con transparencia).
+TOUCH_DIR = os.path.join("assets", "ui", "touch")
+TOUCH_FACES = [
+    "punch", "kick", "ranged", "block", "special", "special_locked", "pause",
+    "joystick_base", "joystick_knob",
+]
 
 
 class TouchInput(PlayerInput):

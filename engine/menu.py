@@ -202,11 +202,35 @@ class DifficultySelect:
         elif inp.just_pressed("cancel"):
             self.cancelled = True
 
+    def handle_tap(self, pos):
+        """Versión táctil: botones − / + y ELEGIR (ver draw)."""
+        for key, rect in getattr(self, "_hits", {}).items():
+            if rect.collidepoint(pos):
+                if key == "minus":
+                    self.level = max(1, self.level - 1)
+                elif key == "plus":
+                    self.level = min(10, self.level + 1)
+                elif key == "ok":
+                    self.done = True
+                return True
+        return False
+
     def draw(self, surface, ui):
         surface.fill(C.DARK)
         ui.draw_small_center(surface, "DIFICULTAD DE LA CPU", C.SCREEN_H // 2 - C.scaled(90))
         big = ui.font_big.render(str(self.level), True, C.YELLOW)
         surface.blit(big, big.get_rect(center=(C.SCREEN_W // 2, C.SCREEN_H // 2)))
+        if ui.touch_lists:
+            etiqueta = ["Muy fácil", "Fácil", "Fácil", "Normal-", "Normal", "Normal+",
+                        "Difícil", "Difícil", "Muy difícil", "Imposible"][self.level - 1]
+            ui.draw_small_center(surface, etiqueta, C.SCREEN_H // 2 + C.scaled(60))
+            r = C.scaled(34)
+            self._hits = {
+                "minus": ui.draw_round_button(surface, (C.SCREEN_W // 2 - C.scaled(130), C.SCREEN_H // 2), r, "−"),
+                "plus": ui.draw_round_button(surface, (C.SCREEN_W // 2 + C.scaled(130), C.SCREEN_H // 2), r, "+"),
+                "ok": ui.draw_pill_button(surface, (C.SCREEN_W // 2, C.SCREEN_H // 2 + C.scaled(130)), "ELEGIR"),
+            }
+            return
         etiqueta = ["Muy fácil", "Fácil", "Fácil", "Normal-", "Normal", "Normal+",
                     "Difícil", "Difícil", "Muy difícil", "Imposible"][self.level - 1]
         ui.draw_small_center(surface, etiqueta, C.SCREEN_H // 2 + C.scaled(60))
@@ -592,6 +616,8 @@ class CharacterSelect:
         footer_cfg = load_input_config()
         footer = build_footer_parts(footer_cfg, [("confirm", "confirmar"), ("cancel", "volver (J1)")])
         ui.draw_footer_mixed(surface, footer, C.SCREEN_H - C.scaled(25))
+        if ui.touch_lists:
+            ui.draw_touch_hint(surface, getattr(self, "touch_hint", None) or "Tocá un luchador para verlo y otra vez para elegirlo")
 
 
 # ======================================================================
@@ -1531,6 +1557,8 @@ class StageSelect:
         footer_cfg = load_input_config()
         footer = build_footer_parts(footer_cfg, [("confirm", "confirmar"), ("cancel", "volver")])
         ui.draw_footer_mixed(surface, footer, C.SCREEN_H - C.scaled(25))
+        if ui.touch_lists:
+            ui.draw_touch_hint(surface, getattr(self, "touch_hint", None) or "Tocá un escenario para marcarlo y otra vez para elegirlo")
 
 
 # ======================================================================
@@ -1824,10 +1852,28 @@ class OptionsSubMenu:
             return label
         return f"{label}: {int(self.settings[key] * 100)}%"
 
+    def handle_tap(self, pos):
+        """Versión táctil: botones − / + al costado de cada fila ajustable."""
+        for (row_idx, direction), rect in getattr(self, "_adj_hits", {}).items():
+            if rect.collidepoint(pos):
+                self.index = row_idx
+                self._adjust(self.rows[row_idx], direction)
+                return True
+        return False
+
     def draw(self, surface, ui):
         surface.fill(C.DARK)
         items = [self._row_text(k) for k in self.rows]
-        ui.draw_menu_list(surface, self.title, items, self.index, center_y=C.SCREEN_H // 2 - C.scaled(10))
+        hits = ui.draw_menu_list(surface, self.title, items, self.index, center_y=C.SCREEN_H // 2 - C.scaled(10))
+        self._adj_hits = {}
+        if ui.touch_lists and hits:
+            r = C.scaled(19)
+            for rect, i in hits:
+                if self.rows[i] in ("controls_p1", "controls_p2", "controls_swap", "back", "fullscreen"):
+                    continue
+                cy = rect.centery
+                self._adj_hits[(i, -1)] = ui.draw_round_button(surface, (rect.left - r - C.scaled(4), cy), r, "−")
+                self._adj_hits[(i, 1)] = ui.draw_round_button(surface, (rect.right + r + C.scaled(4), cy), r, "+")
         if self.message:
             msg_img = ui.font_small.render(self.message, True, C.YELLOW)
             surface.blit(msg_img, msg_img.get_rect(center=(C.SCREEN_W // 2, C.SCREEN_H // 2 + C.scaled(110))))

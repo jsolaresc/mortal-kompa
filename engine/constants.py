@@ -42,7 +42,7 @@ def scaled(px):
     return round(px * RES_SCALE)
 
 
-def set_resolution(name):
+def set_resolution(name, aspect=16 / 9):
     """Fija la resolución activa del juego. TIENE QUE LLAMARSE UNA SOLA
     VEZ, apenas arranca el proceso, ANTES de importar cualquier otro
     módulo de engine/ (ui, menu, tower, character...) -- varios de esos
@@ -51,12 +51,23 @@ def set_resolution(name):
     después de que ya se importaron quedan con la resolución vieja. Por
     eso el cambio de resolución en Opciones pide reiniciar el juego en
     vez de aplicarse al toque."""
-    global RESOLUTION, SCREEN_W, SCREEN_H, RES_SCALE
+    global RESOLUTION, SCREEN_W, SCREEN_H, RES_SCALE, LOGIC_W, VIEW_PAD
     global GROUND_H, GROUND_Y, GRAVITY, PROJECTILE_GRAVITY, CHARACTER_SCALE_MULT
     if name not in RESOLUTIONS:
         name = DEFAULT_RESOLUTION
     RESOLUTION = name
-    SCREEN_W, SCREEN_H = RESOLUTIONS[RESOLUTION]
+    LOGIC_W, SCREEN_H = RESOLUTIONS[RESOLUTION]
+
+    # PANTALLAS MÁS ANCHAS QUE 16:9 (celulares, ~20:9): el lienzo se
+    # estira a lo ANCHO para llenar la pantalla entera (sin franjas
+    # negras ni imágenes deformadas), pero la PELEA en sí sigue jugándose
+    # en una ventana de 16:9 de siempre (LOGIC_W) -- lo que sobra a los
+    # costados (VIEW_PAD de cada lado) solo muestra más escenario de
+    # fondo. Así la jugabilidad es idéntica en cualquier pantalla (y en
+    # una partida por WiFi entre celulares de distinto tamaño).
+    # En PC (16:9) SCREEN_W == LOGIC_W y VIEW_PAD == 0: nada cambia.
+    SCREEN_W = max(LOGIC_W, int(round(SCREEN_H * aspect / 2)) * 2)
+    VIEW_PAD = (SCREEN_W - LOGIC_W) // 2
 
     # Factor para escalar CUALQUIER valor calibrado en el "espacio base"
     # (960x540) a la resolución real de pantalla. 960x540->1280x720 = 4/3;

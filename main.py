@@ -54,7 +54,7 @@ _settings = load_settings()
 if device.TOUCH_UI and _settings.get("resolution") not in ("540p", "720p"):
     # en el celular no se usa 1080p (ver OptionsSubMenu.RESOLUTION_OPTIONS)
     _settings["resolution"] = "720p"
-C.set_resolution(_settings.get("resolution", C.DEFAULT_RESOLUTION))
+C.set_resolution(_settings.get("resolution", C.DEFAULT_RESOLUTION), aspect=device.screen_aspect())
 
 from engine import input_manager as _input_manager_mod
 from engine.input_manager import (
@@ -292,9 +292,9 @@ def new_fighters(p1_json, p2_json, sound_manager, stage=None):
     # punto medio, así que conviene que los personajes también arranquen
     # ahí (si no, en un mapa panorámico aparecerían pegados a un
     # costado en vez de en el medio de la pantalla).
-    world_w = stage.world_w if stage is not None else C.SCREEN_W
+    world_w = stage.world_w if stage is not None else C.LOGIC_W
     center = world_w / 2
-    gap = C.SCREEN_W * 0.2  # mismo espaciado relativo de siempre (0.3/0.7 de pantalla)
+    gap = C.LOGIC_W * 0.2  # mismo espaciado relativo de siempre (0.3/0.7 de pantalla)
     p1.x, p2.x = center - gap, center + gap
     # encararse desde ya (si no, durante la intro del round -antes de que
     # arranque handle_input()- quedaban los dos mirando para la derecha
@@ -419,7 +419,7 @@ def apply_display_mode(settings):
         # ancha que 16:9): el juego se dibuja centrado en su lienzo de
         # siempre y los costados quedan para los controles táctiles (ver
         # main() -> present()).
-        size = device.logical_display_size(C.SCREEN_W, C.SCREEN_H)
+        size = (C.SCREEN_W, C.SCREEN_H)  # ya tiene el aspecto real de la pantalla (ver C.set_resolution)
         if device.IS_ANDROID:
             return pygame.display.set_mode(size, pygame.FULLSCREEN | pygame.SCALED)
         return pygame.display.set_mode(size, pygame.RESIZABLE | pygame.SCALED)
@@ -462,7 +462,7 @@ def clamp_fighters_to_camera(camera_x, *fighters):
     los frena antes de salir de cuadro, en vez de dejar que intenten
     mostrar más ancho del que la cámara puede abarcar."""
     margin = C.scaled(20)
-    lo, hi = camera_x + margin, camera_x + C.SCREEN_W - margin
+    lo, hi = camera_x + margin, camera_x + C.LOGIC_W - margin
     for f in fighters:
         f.clamp_x(lo, hi)
 
@@ -580,6 +580,7 @@ def main():
     ui = UI()
     if device.TOUCH_UI:
         ui.show_special_pips = False  # los reemplaza el botón de Especial táctil
+        ui.touch_lists = True         # menús con opciones grandes para tocar directo
     # NetSoundManager = SoundManager de siempre, que además puede "grabar"
     # lo que suena para mandárselo a los invitados de una partida WiFi.
     sound_manager = NetSoundManager()
@@ -962,6 +963,9 @@ def main():
         # Toques directos sobre la pantalla (versión táctil): opciones de
         # lista, caras de la selección de personaje, escenarios...
         taps = touch.taps if touch is not None else []
+        tap_handler = {STATE_DIFFICULTY: difficulty_select, STATE_OPTIONS_SUB: options_submenu}.get(state)
+        if taps and tap_handler is not None and hasattr(tap_handler, "handle_tap"):
+            taps = [pos for pos in taps if not tap_handler.handle_tap(pos)]
         if taps and state in (
             STATE_MODE_MENU, STATE_ONE_PLAYER_MENU, STATE_MULTIPLAYER_MENU, STATE_OPTIONS,
             STATE_OPTIONS_SUB, STATE_PAUSED, STATE_VERSUS_END, STATE_TOWER_DEFEAT, STATE_NET_LOBBY,
@@ -1275,7 +1279,7 @@ def main():
                             confetti = Confetti()
                             tournament_champion_char = Character(upcoming[w_idx]["json_path"], sound_manager)
                             tournament_champion_char.set_state(C.STATE_WIN, force=True)
-                            tournament_champion_char.x, tournament_champion_char.y = C.SCREEN_W // 2, C.GROUND_Y
+                            tournament_champion_char.x, tournament_champion_char.y = C.LOGIC_W // 2, C.GROUND_Y
                             state = STATE_TOURNAMENT_VICTORY
                         else:
                             tournament_bracket_screen.show_result(upcoming[w_idx], upcoming[1 - w_idx])
@@ -1324,7 +1328,7 @@ def main():
                 net_bk_results.append(winner_entrant["label"])
                 if finished:
                     confetti = Confetti()
-                    tournament_champion_char.x = C.SCREEN_W // 2  # centrado, ver pedido explícito
+                    tournament_champion_char.x = C.LOGIC_W // 2  # centrado, ver pedido explícito
                     state = STATE_TOURNAMENT_VICTORY
                 else:
                     tournament_bracket_screen.start_new_match()
@@ -1715,7 +1719,7 @@ def main():
                             net_bk_results.append(winner_entrant["label"])
                             confetti = Confetti()
                             tournament_champion_char = winner_char
-                            tournament_champion_char.x = C.SCREEN_W // 2  # centrado, ver pedido explícito
+                            tournament_champion_char.x = C.LOGIC_W // 2  # centrado, ver pedido explícito
                             state = STATE_TOURNAMENT_VICTORY
                         else:
                             tournament_pending_result = (winner_entrant, loser_entrant)
@@ -1819,7 +1823,7 @@ def main():
             if round_end_timer <= 0:
                 if game_mode == C.MODE_TOWER and tower_result == "cleared":
                     p1.set_state(C.STATE_WIN, force=True)
-                    p1.x, p1.y = C.SCREEN_W // 2, C.GROUND_Y
+                    p1.x, p1.y = C.LOGIC_W // 2, C.GROUND_Y
                     confetti = Confetti()
                     state = STATE_TOWER_VICTORY
                 elif game_mode == C.MODE_TOWER and tower_result == "advance":
@@ -1903,10 +1907,9 @@ def main():
                         mine = p2
                     touch.special_charge = mine.hits_taken_since_special
                     DEBUG["my_facing"] = mine.facing
-            elif state == STATE_INTRO:
-                touch.set_mode(touch_mod.MODE_NONE)
             else:
-                touch.set_mode(touch_mod.MODE_MENU)
+                # menús: sin joystick ni botones, se toca directo la opción
+                touch.set_mode(touch_mod.MODE_NONE)
 
         # cartelito temporal (avisos de red, etc.)
         if toast_text and pygame.time.get_ticks() / 1000.0 < toast_until:

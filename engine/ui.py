@@ -23,7 +23,7 @@ import os
 import random
 import pygame
 from engine import constants as C
-from engine.stage import Stage, ALL_STAGE_EXTS
+from engine.stage import Stage, ALL_STAGE_EXTS, _cover
 from engine import touch as touch_mod
 
 
@@ -114,6 +114,11 @@ class UI:
         # Especial NO se dibujan en el HUD: los reemplaza el propio botón
         # de Especial, que se va llenando (ver engine/touch.py).
         self.show_special_pips = True
+        # Versión táctil: listas de menú con opciones más grandes, cada una
+        # en su propia "pastilla" para tocarla directo con el dedo, y sin
+        # pies de página de teclas (ver _draw_touch_list / draw_footer_mixed).
+        self.touch_lists = False
+        self._list_font = None
 
         # Assets editables (None si el usuario todavía no los reemplazó)
         # Fondo de título: si hay archivos en assets/ui/title_background/
@@ -192,11 +197,22 @@ class UI:
             self._scaled_cache[key] = surf
         return surf
 
+    def _covered(self, image):
+        """Fondo de pantalla completa SIN deformar: cubre todo el lienzo
+        (aunque la pantalla sea más ancha que 16:9) recortando lo que
+        sobra. Cacheado."""
+        key = (id(image), "cover", C.SCREEN_W, C.SCREEN_H)
+        surf = self._scaled_cache.get(key)
+        if surf is None:
+            surf = _cover(image, C.SCREEN_W, C.SCREEN_H, anchor_y=0.5)
+            self._scaled_cache[key] = surf
+        return surf
+
     def draw_screen_background(self, surface, image):
         """Dibuja 'image' (ya escalada a pantalla completa) de fondo, o
         el gris liso de siempre si todavía no existe ese archivo."""
         if image:
-            surface.blit(self._scaled(image, (C.SCREEN_W, C.SCREEN_H)), (0, 0))
+            surface.blit(self._covered(image), (0, 0))
         else:
             surface.fill(C.DARK)
 
@@ -326,7 +342,7 @@ class UI:
             self.title_bg_anim.update(dt)
             self.title_bg_anim.draw(surface)
         elif self.title_background:
-            surface.blit(self._scaled(self.title_background, (C.SCREEN_W, C.SCREEN_H)), (0, 0))
+            surface.blit(self._covered(self.title_background), (0, 0))
         else:
             surface.fill(C.DARK)
 
@@ -410,6 +426,14 @@ class UI:
         ('icon', archivo, descripción) o ('text', etiqueta, descripción),
         ver input_manager.build_footer_parts(). Arma toda la línea y la
         centra como un conjunto."""
+        if self.touch_lists:
+            # Versión táctil: no hay teclas que explicar. Solo se deja una
+            # ayuda cuando la pantalla se "toca para seguir".
+            for kind, content, desc in parts:
+                if content in ("OK",) and desc in ("continuar", "pelear"):
+                    self.draw_touch_hint(surface, f"Tocá la pantalla para {desc}", y)
+                    break
+            return
         SEP = "   |   "
         pieces = []  # lista de superficies ya renderizadas, en orden
         icon_h = 20
@@ -443,6 +467,8 @@ class UI:
         'items' es una lista de strings ya formateados (con su valor si
         corresponde, ej: 'Volumen música: 70%')."""
         center_y = center_y or C.SCREEN_H // 2
+        if self.touch_lists:
+            return self._draw_touch_list(surface, title, items, selected_index, center_y, extra_lines)
         start_y = center_y - (len(items) - 1) * 22
 
         # el título va SIEMPRE pegado arriba de la lista real (no a una
@@ -470,3 +496,89 @@ class UI:
                 img = self.font_tiny.render(line, True, C.GRAY)
                 surface.blit(img, img.get_rect(center=(C.SCREEN_W // 2, y)))
                 y += 20
+
+    # ------------------------------------------------------------------
+    # Versión táctil
+    # ------------------------------------------------------------------
+    TOUCH_ROW_PITCH = 46   # espacio base (960x540) entre opciones
+    TOUCH_ROW_H = 40       # alto base de cada "pastilla"
+
+    def touch_list_height(self, count):
+        return C.scaled(self.TOUCH_ROW_PITCH) * count
+
+    def _draw_touch_list(self, surface, title, items, selected_index, center_y, extra_lines=None):
+        if self._list_font is None:
+            self._list_font = self._load_title_font(C.scaled(23))
+        pitch = C.scaled(self.TOUCH_ROW_PITCH)
+        row_h = C.scaled(self.TOUCH_ROW_H)
+        start_y = center_y - (len(items) - 1) * pitch / 2
+        if title:
+            self.draw_title(surface, title, y=int(start_y - pitch / 2 - C.scaled(28)))
+        imgs = []
+        for i, text in enumerate(items):
+            color = C.YELLOW if i == selected_index else C.WHITE
+            imgs.append(self._list_font.render(text, True, color))
+        pill_w = max([C.scaled(300)] + [im.get_width() + C.scaled(70) for im in imgs])
+        pill_w = min(pill_w, C.SCREEN_W - C.scaled(40))
+        hits = []
+        radius = row_h // 2
+        for i, img in enumerate(imgs):
+            cy = int(start_y + i * pitch)
+            rect = pygame.Rect(0, 0, pill_w, row_h)
+            rect.center = (C.SCREEN_W // 2, cy)
+            bg = pygame.Surface(rect.size, pygame.SRCALPHA)
+            sel = i == selected_index
+            pygame.draw.rect(bg, (0, 0, 0, 165), bg.get_rect(), border_radius=radius)
+            pygame.draw.rect(bg, (240, 200, 40, 230) if sel else (255, 255, 255, 90), bg.get_rect(),
+                             width=max(2, C.scaled(2)), border_radius=radius)
+            surface.blit(bg, rect.topleft)
+            surface.blit(img, img.get_rect(center=rect.center))
+            hit = rect.inflate(C.scaled(10), pitch - row_h)
+            hits.append((hit, i))
+        touch_mod.set_list_hits(hits)
+        if extra_lines:
+            y = int(start_y + len(items) * pitch)
+            for line in extra_lines:
+                img = self.font_tiny.render(line, True, C.GRAY)
+                surface.blit(img, img.get_rect(center=(C.SCREEN_W // 2, y)))
+                y += C.scaled(20)
+        return hits
+
+    def draw_touch_hint(self, surface, text, y=None):
+        """Línea de ayuda para la versión táctil (reemplaza a los pies de
+        página con teclas)."""
+        y = y if y is not None else C.SCREEN_H - C.scaled(25)
+        img = self.font_footer.render(text, True, (230, 230, 235))
+        bg = img.get_rect(center=(C.SCREEN_W // 2, y)).inflate(C.scaled(24), C.scaled(10))
+        box = pygame.Surface(bg.size, pygame.SRCALPHA)
+        pygame.draw.rect(box, (0, 0, 0, 140), box.get_rect(), border_radius=bg.height // 2)
+        surface.blit(box, bg.topleft)
+        surface.blit(img, img.get_rect(center=(C.SCREEN_W // 2, y)))
+
+    def draw_round_button(self, surface, center, radius, text, color=(60, 60, 72)):
+        """Botón redondo simple para tocar (versión táctil). Devuelve su rect."""
+        r = int(radius)
+        circ = pygame.Surface((2 * r, 2 * r), pygame.SRCALPHA)
+        pygame.draw.circle(circ, (*color, 220), (r, r), r)
+        pygame.draw.circle(circ, (255, 255, 255, 140), (r, r), r, width=max(2, C.scaled(2)))
+        rect = circ.get_rect(center=(int(center[0]), int(center[1])))
+        surface.blit(circ, rect)
+        img = self.font_med.render(text, True, C.WHITE)
+        surface.blit(img, img.get_rect(center=rect.center))
+        return rect
+
+    def draw_pill_button(self, surface, center, text, min_w=None, color=(60, 160, 90)):
+        """Botón alargado (ej. "ELEGIR") para la versión táctil."""
+        if self._list_font is None:
+            self._list_font = self._load_title_font(C.scaled(23))
+        img = self._list_font.render(text, True, C.WHITE)
+        h = C.scaled(self.TOUCH_ROW_H)
+        w = max(min_w or C.scaled(200), img.get_width() + C.scaled(60))
+        rect = pygame.Rect(0, 0, w, h)
+        rect.center = (int(center[0]), int(center[1]))
+        bg = pygame.Surface(rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(bg, (*color, 230), bg.get_rect(), border_radius=h // 2)
+        pygame.draw.rect(bg, (255, 255, 255, 150), bg.get_rect(), width=max(2, C.scaled(2)), border_radius=h // 2)
+        surface.blit(bg, rect.topleft)
+        surface.blit(img, img.get_rect(center=rect.center))
+        return rect

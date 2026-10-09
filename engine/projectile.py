@@ -158,7 +158,7 @@ class Projectile:
         # escenario más ancho que 16:9 (ver Stage.world_w) la cámara
         # puede estar desplazada, así que un proyectil con x mayor a
         # C.SCREEN_W puede seguir estando bien a la vista.
-        world_w = world_w if world_w is not None else C.SCREEN_W
+        world_w = world_w if world_w is not None else C.LOGIC_W
         margin = C.scaled(60)
         if self.x < -margin or self.x > world_w + margin:
             self.alive = False
@@ -205,5 +205,5 @@ class Projectile:
         img = self.image
         if self.facing == -1:
             img = pygame.transform.flip(img, True, False)
-        rect = img.get_rect(center=(self.x - camera_x, self.y - self.visual_y_offset))
+        rect = img.get_rect(center=(self.x - camera_x + C.VIEW_PAD, self.y - self.visual_y_offset))
         surface.blit(img, rect)
