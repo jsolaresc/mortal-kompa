@@ -526,16 +526,24 @@ class TouchControls:
             face = self._face("special", rr, 245 if is_pressed else 215)
         else:
             face = self._face("special_locked", rr, 165)
-        self._blit_center(surface, face, (bx, by))
-        # aro de carga: 5 segmentos pegados al borde del disco
-        r_in = disc_r + u(1)
+        # desbloqueado: el aro va DETRÁS del PNG (no corta los pinchos);
+        # bloqueado: encima, para que se vea bien la carga
+        if not ready:
+            self._blit_center(surface, face, (bx, by))
+        self._draw_charge_ring(surface, cx, cy, disc_r, width, charge, req)
+        if ready:
+            self._blit_center(surface, face, (bx, by))
+
+    def _draw_charge_ring(self, surface, cx, cy, disc_r, width, charge, req):
+        """Aro de 5 segmentos pegado al borde del disco del ícono."""
+        r_in = disc_r + self._u(1)
         r_out = r_in + width
         gap = 0.10
         seg = (2 * math.pi) / req
+        n = 20
         for i in range(req):
             a0 = -math.pi / 2 + i * seg + gap / 2  # arranca arriba, sentido horario
             a1 = a0 + seg - gap
-            n = max(6, int(24 / req * 4))
             pts = [(cx + r_out * math.cos(a0 + (a1 - a0) * k / n), cy + r_out * math.sin(a0 + (a1 - a0) * k / n)) for k in range(n + 1)]
             pts += [(cx + r_in * math.cos(a1 - (a1 - a0) * k / n), cy + r_in * math.sin(a1 - (a1 - a0) * k / n)) for k in range(n + 1)]
             col = (255, 215, 50) if i < charge else (55, 55, 65)
