@@ -214,13 +214,13 @@ class JoinScreen:
 
     # --- teclado numérico para escribir la IP ---
     def _key_rects(self):
-        size = C.scaled(52)
-        gap = C.scaled(10)
+        size = C.scaled(56)
+        gap = C.scaled(14)
         cols = 3
         rows = 5
         total_w = cols * size + (cols - 1) * gap
         x0 = C.SCREEN_W // 2 - total_w // 2
-        y0 = C.scaled(175)
+        y0 = C.scaled(166)
         rects = []
         for i, k in enumerate(KEYPAD):
             row_w = total_w + 2 * size

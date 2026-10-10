@@ -500,25 +500,25 @@ class UI:
     # ------------------------------------------------------------------
     # Versión táctil
     # ------------------------------------------------------------------
-    TOUCH_ROW_PITCH = 46   # espacio base (960x540) entre opciones
-    TOUCH_ROW_H = 40       # alto base de cada "pastilla"
+    TOUCH_ROW_PITCH = 64   # espacio base (960x540) entre opciones
+    TOUCH_ROW_H = 46       # alto base de cada "pastilla"
 
     def touch_list_height(self, count):
         return C.scaled(self.TOUCH_ROW_PITCH) * count
 
     def _draw_touch_list(self, surface, title, items, selected_index, center_y, extra_lines=None):
         if self._list_font is None:
-            self._list_font = self._load_title_font(C.scaled(23))
+            self._list_font = self._load_title_font(C.scaled(25))
         pitch = C.scaled(self.TOUCH_ROW_PITCH)
         row_h = C.scaled(self.TOUCH_ROW_H)
         start_y = center_y - (len(items) - 1) * pitch / 2
         if title:
-            self.draw_title(surface, title, y=int(start_y - pitch / 2 - C.scaled(28)))
+            self.draw_title(surface, title, y=int(start_y - pitch / 2 - C.scaled(40)))
         imgs = []
         for i, text in enumerate(items):
             color = C.YELLOW if i == selected_index else C.WHITE
             imgs.append(self._list_font.render(text, True, color))
-        pill_w = max([C.scaled(300)] + [im.get_width() + C.scaled(70) for im in imgs])
+        pill_w = max([C.scaled(340)] + [im.get_width() + C.scaled(70) for im in imgs])
         pill_w = min(pill_w, C.SCREEN_W - C.scaled(40))
         hits = []
         radius = row_h // 2
@@ -570,7 +570,7 @@ class UI:
     def draw_pill_button(self, surface, center, text, min_w=None, color=(60, 160, 90)):
         """Botón alargado (ej. "ELEGIR") para la versión táctil."""
         if self._list_font is None:
-            self._list_font = self._load_title_font(C.scaled(23))
+            self._list_font = self._load_title_font(C.scaled(25))
         img = self._list_font.render(text, True, C.WHITE)
         h = C.scaled(self.TOUCH_ROW_H)
         w = max(min_w or C.scaled(200), img.get_width() + C.scaled(60))

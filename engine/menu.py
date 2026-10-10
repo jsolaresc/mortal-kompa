@@ -1867,13 +1867,13 @@ class OptionsSubMenu:
         hits = ui.draw_menu_list(surface, self.title, items, self.index, center_y=C.SCREEN_H // 2 - C.scaled(10))
         self._adj_hits = {}
         if ui.touch_lists and hits:
-            r = C.scaled(19)
+            r = C.scaled(23)
             for rect, i in hits:
                 if self.rows[i] in ("controls_p1", "controls_p2", "controls_swap", "back", "fullscreen"):
                     continue
                 cy = rect.centery
-                self._adj_hits[(i, -1)] = ui.draw_round_button(surface, (rect.left - r - C.scaled(4), cy), r, "−")
-                self._adj_hits[(i, 1)] = ui.draw_round_button(surface, (rect.right + r + C.scaled(4), cy), r, "+")
+                self._adj_hits[(i, -1)] = ui.draw_round_button(surface, (rect.left - r - C.scaled(8), cy), r, "−")
+                self._adj_hits[(i, 1)] = ui.draw_round_button(surface, (rect.right + r + C.scaled(8), cy), r, "+")
         if self.message:
             msg_img = ui.font_small.render(self.message, True, C.YELLOW)
             surface.blit(msg_img, msg_img.get_rect(center=(C.SCREEN_W // 2, C.SCREEN_H // 2 + C.scaled(110))))
