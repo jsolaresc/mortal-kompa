@@ -44,7 +44,16 @@ def _android_crash_screen(exc_type, exc, tb):
         scr = _pg.display.get_surface() or _pg.display.set_mode((0, 0), _pg.FULLSCREEN)
         w, h = scr.get_size()
         font = _pg.font.Font(None, max(18, h // 34))
-        lines = ["Mortal Kompa se cayó :(  Sacale captura y mandásela a Claude."] + text.splitlines()[-22:]
+        raw = ["Mortal Kompa se cayó :(  Sacale captura y mandásela a Claude."] + text.splitlines()[-22:]
+        lines = []
+        for ln in raw:  # partir líneas largas para que entren en pantalla
+            while ln and font.size(ln)[0] > w - 24:
+                cut = len(ln)
+                while cut > 1 and font.size(ln[:cut])[0] > w - 24:
+                    cut -= 1
+                lines.append(ln[:cut])
+                ln = "    " + ln[cut:]
+            lines.append(ln)
         while True:
             for ev in _pg.event.get():
                 if ev.type in (_pg.QUIT, _pg.FINGERDOWN, _pg.MOUSEBUTTONDOWN, _pg.KEYDOWN):
@@ -54,7 +63,7 @@ def _android_crash_screen(exc_type, exc, tb):
             y = 10
             for i, ln in enumerate(lines):
                 col = (255, 210, 80) if i == 0 else (235, 235, 235)
-                scr.blit(font.render(ln[:140], True, col), (12, y))
+                scr.blit(font.render(ln, True, col), (12, y))
                 y += font.get_linesize()
             _pg.display.flip()
             _pg.time.wait(100)
@@ -83,6 +92,7 @@ import pygame
 
 from engine import constants as C
 from engine import device
+device.fix_android_paths(force="--android-paths" in sys.argv)
 from engine.settings import load_settings, save_settings
 
 # OJO: esto tiene que pasar ACÁ, antes de importar cualquier otro módulo

@@ -145,3 +145,55 @@ def screen_aspect():
     if h > w:
         w, h = h, w  # el juego va siempre apaisado
     return max(16 / 9, min(w / h, 2.4))
+
+
+def fix_android_paths(force=False):
+    """En Android, SDL interpreta una ruta RELATIVA ("assets/ui/icon.png")
+    como un archivo DENTRO del paquete del APK, no en la carpeta donde se
+    desempaquetó el juego -- os.path.isfile() dice que existe pero
+    pygame.image.load() no lo encuentra. Acá se envuelven las funciones de
+    pygame que abren archivos para que siempre reciban rutas absolutas.
+    En PC no hace nada (salvo force=True, para probarlo)."""
+    if not (IS_ANDROID or force):
+        return
+    import pygame
+
+    def _abs(p):
+        if isinstance(p, (str, bytes, os.PathLike)):
+            p = os.fspath(p)
+            if isinstance(p, bytes):
+                p = p.decode("utf-8")
+            if not os.path.isabs(p):
+                return os.path.abspath(p)
+        return p
+
+    _load = pygame.image.load
+    _save = pygame.image.save
+    _music_load = pygame.mixer.music.load
+
+    def image_load(file, *args, **kwargs):
+        return _load(_abs(file), *args, **kwargs)
+
+    def image_save(surface, file, *args, **kwargs):
+        return _save(surface, _abs(file), *args, **kwargs)
+
+    def music_load(file, *args, **kwargs):
+        return _music_load(_abs(file), *args, **kwargs)
+
+    class Sound(pygame.mixer.Sound):
+        def __init__(self, *args, **kwargs):
+            if args:
+                args = (_abs(args[0]),) + tuple(args[1:])
+            if "file" in kwargs:
+                kwargs["file"] = _abs(kwargs["file"])
+            super().__init__(*args, **kwargs)
+
+    class Font(pygame.font.Font):
+        def __init__(self, file=None, *args, **kwargs):
+            super().__init__(_abs(file) if file is not None else None, *args, **kwargs)
+
+    pygame.image.load = image_load
+    pygame.image.save = image_save
+    pygame.mixer.music.load = music_load
+    pygame.mixer.Sound = Sound
+    pygame.font.Font = Font
