@@ -12,7 +12,9 @@ version = 1.3.0
 
 requirements = python3,pygame,pyjnius,android
 
-icon.filename = %(source.dir)s/build_android/icon.png
+icon.filename = %(source.dir)s/build_android/icon_legacy.png
+icon.adaptive_foreground.filename = %(source.dir)s/build_android/icon_fg.png
+icon.adaptive_background.filename = %(source.dir)s/build_android/icon_bg.png
 presplash.filename = %(source.dir)s/build_android/presplash.png
 android.presplash_color = #141418
 

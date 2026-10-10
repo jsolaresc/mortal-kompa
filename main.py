@@ -24,6 +24,46 @@ Opciones > Configurar Controles):
 
 import os
 import sys
+
+
+def _android_crash_screen(exc_type, exc, tb):
+    """En el celular no hay consola: si el juego se cae, en vez de cerrarse
+    en silencio muestra el error en pantalla (para sacarle captura) y lo
+    guarda en crash.txt. Tocar la pantalla cierra."""
+    import traceback
+    text = "".join(traceback.format_exception(exc_type, exc, tb))
+    try:
+        with open("crash.txt", "w", encoding="utf-8") as fh:
+            fh.write(text)
+    except OSError:
+        pass
+    sys.__excepthook__(exc_type, exc, tb)
+    try:
+        import pygame as _pg
+        _pg.init()
+        scr = _pg.display.get_surface() or _pg.display.set_mode((0, 0), _pg.FULLSCREEN)
+        w, h = scr.get_size()
+        font = _pg.font.Font(None, max(18, h // 34))
+        lines = ["Mortal Kompa se cayó :(  Sacale captura y mandásela a Claude."] + text.splitlines()[-22:]
+        while True:
+            for ev in _pg.event.get():
+                if ev.type in (_pg.QUIT, _pg.FINGERDOWN, _pg.MOUSEBUTTONDOWN, _pg.KEYDOWN):
+                    _pg.quit()
+                    os._exit(1)
+            scr.fill((25, 10, 15))
+            y = 10
+            for i, ln in enumerate(lines):
+                col = (255, 210, 80) if i == 0 else (235, 235, 235)
+                scr.blit(font.render(ln[:140], True, col), (12, y))
+                y += font.get_linesize()
+            _pg.display.flip()
+            _pg.time.wait(100)
+    except Exception:
+        os._exit(1)
+
+
+if "ANDROID_ARGUMENT" in os.environ or "--crash-screen" in sys.argv:
+    sys.excepthook = _android_crash_screen
 import subprocess
 
 # Si esto es un .exe armado con PyInstaller (ver mortal_kompa.spec) --

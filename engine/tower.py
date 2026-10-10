@@ -11,7 +11,6 @@ import os
 import random
 
 import pygame
-from PIL import Image
 
 from engine import constants as C
 from engine.menu import SIDE_PANEL_W
@@ -55,12 +54,13 @@ def _make_black_silhouette(src_path, dst_path, size=700):
     reportado justo después de elegir personaje para la Torre."""
     if os.path.isfile(dst_path):
         return dst_path
-    img = Image.open(src_path).convert("RGBA")
-    r, g, b, a = img.split()
-    black = Image.new("RGBA", img.size, (0, 0, 0, 255))
-    black.putalpha(a)
+    # Solo pygame (en Android no hay PIL): RGB -> 0, alfa intacto
+    img = pygame.image.load(src_path)
+    black = pygame.Surface(img.get_size(), pygame.SRCALPHA)
+    black.blit(img, (0, 0))
+    black.fill((0, 0, 0, 255), special_flags=pygame.BLEND_RGBA_MIN)
     os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-    black.save(dst_path)
+    pygame.image.save(black, dst_path)
     return dst_path
 
 
