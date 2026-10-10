@@ -1,0 +1,40 @@
+# Diagnóstico: corre las herramientas oficiales de Android sobre APKs ya
+# publicados en Releases y sube el resultado a la rama "build-logs".
+name: Verificar APK
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Tags de release separados por espacio"
+        default: "build-8 build-9"
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          echo "build-tools: $BT" > verify.txt
+          for t in ${{ github.event.inputs.tags }}; do
+            gh release download "$t" -p "*.apk" -D "apk_$t"
+            f=$(ls apk_$t/*.apk)
+            {
+              echo; echo "################ $t  $f"
+              echo "--- apksigner verify"; $BT/apksigner verify --verbose --print-certs "$f" 2>&1 | head -40
+              echo "--- zipalign check"; $BT/zipalign -c -P 16 -v 4 "$f" 2>&1 | tail -3
+              echo "--- aapt2 badging"; $BT/aapt2 dump badging "$f" 2>&1 | head -40
+              echo "--- manifest"; $BT/aapt2 dump xmltree --file AndroidManifest.xml "$f" 2>&1 | head -120
+            } >> verify.txt
+          done
+      - name: Subir resultado
+        if: always()
+        run: |
+          cp verify.txt /tmp/verify.txt
+          git config user.name build-bot; git config user.email build-bot@users.noreply.github.com
+          git checkout --orphan build-logs; git rm -rf --cached . > /dev/null
+          cp /tmp/verify.txt verify.txt; git add verify.txt; git commit -m "verify"; git push -f origin build-logs
