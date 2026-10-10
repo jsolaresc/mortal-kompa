@@ -32,12 +32,36 @@ _multicast_lock = None
 _wake_lock_done = False
 
 
+def force_landscape():
+    """Fuerza horizontal (cualquiera de los dos sentidos) desde Java.
+    Llamar DESPUÉS de crear la ventana: SDL decide la orientación al
+    crearla y podría pisar la del manifest."""
+    if not IS_ANDROID:
+        return
+    try:
+        from jnius import autoclass
+        from android.runnable import run_on_ui_thread  # type: ignore
+
+        activity = autoclass("org.kivy.android.PythonActivity").mActivity
+        ActivityInfo = autoclass("android.content.pm.ActivityInfo")
+
+        @run_on_ui_thread
+        def _set():
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE)
+
+        _set()
+    except Exception as e:  # pragma: no cover - solo en Android
+        print(f"[AVISO] No pude forzar horizontal: {e}")
+
+
 def android_setup():
     """Llamar una vez al arrancar, en Android. Nunca rompe si algo
     falla (por ejemplo, si pyjnius no está disponible)."""
     global _multicast_lock, _wake_lock_done
     if not IS_ANDROID:
         return
+    # pista para SDL ANTES de abrir la ventana: solo horizontal
+    os.environ["SDL_IOS_ORIENTATIONS"] = "LandscapeLeft LandscapeRight"
     try:
         from jnius import autoclass, cast
 

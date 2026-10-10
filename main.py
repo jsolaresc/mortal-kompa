@@ -595,6 +595,7 @@ def main():
             pass
 
     display = apply_display_mode(settings)
+    device.force_landscape()
 
     # 'screen' es el lienzo del juego (C.SCREEN_W x C.SCREEN_H, 16:9) --
     # todo el juego dibuja ahí como siempre. En PC es directamente la
@@ -1485,7 +1486,10 @@ def main():
                 state = STATE_OPTIONS_SUB
 
         elif state == STATE_CHAR_SELECT:
-            prev_confirmed = list(char_select.confirmed)
+            # lo ya anunciado se guarda en el propio select: los toques
+            # confirman ANTES de llegar acá (ver taps más arriba), así que
+            # comparar contra el estado de este mismo cuadro no alcanza
+            prev_confirmed = getattr(char_select, "_announced", [False, False])
             real_inputs = [inputs[0], inputs[1]]
             char_select.update(real_inputs, dt)
             char_select.draw(screen, ui)
@@ -1496,6 +1500,7 @@ def main():
                     if chosen and chosen != RANDOM_SENTINEL:
                         slug = os.path.splitext(os.path.basename(chosen))[0]
                         sound_manager.play(os.path.join("assets", "sounds", "announcer", "select", f"{slug}.wav"), volume=0.9)
+            char_select._announced = list(char_select.confirmed)
             if char_select.cancelled:
                 if game_mode == MODE_NET_VERSUS:
                     go_net_lobby()

@@ -129,9 +129,9 @@ class TouchControls:
             ("confirm", dw - u(120), dh - u(125), u(78)),
             ("cancel", dw - u(275), dh - u(78), u(54)),
         ]
-        # pausa: centrada, justo debajo del timer (arriba a los costados
-        # están las barras de vida, que ahora llegan al borde de la pantalla)
-        self.pause_button = ("start", dw / 2, u(122), u(30))
+        # pausa: arriba a la izquierda, debajo del nombre del luchador 1
+        # (centrada tocaba el reloj)
+        self.pause_button = ("start", u(66), u(182), u(28))
 
     def buttons(self):
         if self.mode == MODE_FIGHT:

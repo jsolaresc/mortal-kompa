@@ -18,6 +18,7 @@ android.presplash_color = #141418
 
 # Apaisado (se puede girar el celular para cualquiera de los dos lados)
 orientation = landscape, landscape-reverse
+android.manifest.orientation = sensorLandscape
 fullscreen = 1
 
 # Red local (multijugador WiFi) + mantener la pantalla prendida
