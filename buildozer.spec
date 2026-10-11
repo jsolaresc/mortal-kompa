@@ -5,7 +5,7 @@ package.name = mortalkompa
 package.domain = ar.joaquin
 source.dir = .
 source.include_exts = py,png,jpg,jpeg,ogg,wav,ttf,json,txt
-source.exclude_dirs = bin,.buildozer,.github,build_android,tools
+source.exclude_dirs = bin,.buildozer,.github,build_android,tools,web
 source.exclude_patterns = buildozer.spec,README*.md
 # La versión real la pone el build automático (1.3.<número de build>)
 version = 1.3.0

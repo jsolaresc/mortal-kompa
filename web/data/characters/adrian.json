@@ -1,0 +1,140 @@
+{
+  "name": "Adrián",
+  "sprite_folder": "assets/characters/adrian",
+  "scale": 0.7286,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/adrian.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 4
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 65,
+      "hit_offset_y": 90,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 70,
+      "hit_offset_y": 110,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 5
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 10,
+      "launch_height": "high",
+      "trajectory": "straight",
+      "projectile_mode": "random_spin",
+      "projectile_weights": [
+        0.8,
+        0.2
+      ],
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 5
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "y_offset": [
+        0,
+        60,
+        70,
+        0
+      ],
+      "no_flip": true,
+      "frames": 4
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 10,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "random_spin",
+      "projectile_weights": [
+        0.8,
+        0.2
+      ],
+      "visual_y_offset": 20,
+      "frames": 4
+    }
+  },
+  "pose2_image": "pose2.png",
+  "projectile_groups": [
+    4,
+    4
+  ],
+  "sounds": {
+    "ranged": [
+      "sounds/ranged/adrian_projectile.mp3"
+    ]
+  }
+}

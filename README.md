@@ -1,8 +1,14 @@
-# Mortal Kompa — versión Android
+# Mortal Kompa — Android y navegador
 
-Este repo es la versión para celular de Mortal Kompa (V.1.3). Cada vez que se
-sube un cambio a `main`, GitHub compila solo el APK (pestaña **Actions**) y lo
-publica en **Releases**.
+Este repo tiene dos versiones de Mortal Kompa (V.1.3):
+
+- **APK para Android** (código Python, raíz del repo). Cada cambio subido a
+  `main` compila el APK solo (pestaña **Actions**) y lo publica en **Releases**.
+- **Navegador** (carpeta `web/`, JavaScript). Se juega desde una página, en PC,
+  Android o iPhone, con multijugador **online por link**. Se publica sola en
+  GitHub Pages (ver `web/README.md`).
+
+Ninguna de las dos toca la versión instalable de PC (la de escenarios en video).
 
 ## Instalar en un celular
 1. En el celular, entrá a este repo (logueado en GitHub) → **Releases** → el
@@ -19,7 +25,7 @@ Para actualizar, instalá el APK nuevo encima: no hace falta desinstalar
 - Derecha: Puño, Patada, Distancia, Especial y Bloqueo.
 - El botón de Especial arranca con candado y se va llenando con cada golpe que
   recibís; con 5 golpes se habilita (brilla).
-- Arriba a la derecha: pausa. Botón "Atrás" del celular: volver / pausa.
+- Arriba a la izquierda, debajo del nombre: pausa. Botón "Atrás" del celular: volver / pausa.
 - En los menús se puede tocar directamente las opciones y las caras.
 
 ## Multijugador (WiFi)
@@ -38,3 +44,5 @@ el juego no usa internet).
 - Para probar la interfaz táctil en PC: `python main.py --touch` (el mouse hace de dedo).
 - `build_android/prepare_android.py` arma esta carpeta desde la versión de PC
   (saca la intro, pasa los escenarios en video a captura fija y el audio a .ogg).
+- `tools/build_web.py` arma los personajes, escenarios y sonidos de la versión
+  de navegador (`web/`) a partir de este mismo proyecto (ver `web/README.md`).

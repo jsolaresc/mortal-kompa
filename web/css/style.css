@@ -1,0 +1,93 @@
+@font-face {
+  font-family: "Roboto Black";
+  src: url("../assets/fonts/Roboto-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-display: swap;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: "Roboto Black", "Arial Black", sans-serif;
+}
+
+canvas#game {
+  display: block;
+  background: #000;
+  touch-action: none;
+}
+
+.hidden { display: none !important; }
+
+#stage {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+#share {
+  position: absolute;
+  right: 3%;
+  top: 16%;
+  width: min(44%, 400px);
+  background: rgba(16, 18, 30, 0.94);
+  border: 2px solid #f0c828;
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #fff;
+  font-size: 15px;
+  box-sizing: border-box;
+  z-index: 5;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: auto;
+}
+#share .row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+#share .label { margin-bottom: 4px; }
+#share input {
+  font: inherit;
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #556;
+  background: #0b0c14;
+  color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+#share .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+#share button, #share .btn {
+  font: inherit;
+  font-size: 14px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.85);
+  background: #3ca05a;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  flex: 1 1 auto;
+  text-align: center;
+}
+#share .wa { background: #1fa855; }
+#share .mail { background: #3a6fd8; }
+#share #share-native { background: #8a4ad8; }
+#share .note { margin-top: 8px; font-size: 12px; color: #aab; font-family: system-ui, sans-serif; }
+
+@media (max-height: 420px) {
+  #share { top: 8%; padding: 10px 12px; font-size: 13px; }
+  #share button, #share .btn { padding: 7px 10px; font-size: 13px; }
+}
+

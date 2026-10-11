@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+  <meta name="description" content="Mortal Kompa: juego de pelea entre amigos y familia. Jugá en el navegador, contra la CPU, de a dos o online con un link.">
+  <meta property="og:title" content="Mortal Kompa">
+  <meta property="og:description" content="¡Te desafío a una pelea! Juego de pelea en el navegador.">
+  <title>Mortal Kompa</title>
+  <link rel="icon" href="assets/ui/app_icon_192.png">
+  <link rel="apple-touch-icon" href="assets/ui/app_icon_192.png">
+  <meta property="og:image" content="assets/ui/app_icon_512.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+  <canvas id="game" width="960" height="540"></canvas>
+
+  <div id="share" class="hidden">
+    <label class="row">Tu nombre
+      <input id="share-name" maxlength="16" placeholder="Ej: Joaquín" autocomplete="nickname">
+    </label>
+    <div id="share-link-box">
+      <div class="label">Link para invitar</div>
+      <input id="share-link" readonly>
+      <div class="buttons">
+        <button id="share-copy" type="button">Copiar link</button>
+        <a id="share-wa" target="_blank" rel="noopener" class="btn wa">WhatsApp</a>
+        <a id="share-mail" class="btn mail">Mail</a>
+        <button id="share-native" type="button" class="hidden">Compartir…</button>
+      </div>
+      <div class="note">Cualquiera que abra el link entra a tu sala.</div>
+    </div>
+  </div>
+  </div>
+
+  <script src="lib/peerjs.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

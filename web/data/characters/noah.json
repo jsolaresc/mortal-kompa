@@ -1,0 +1,116 @@
+{
+  "name": "Noah",
+  "sprite_folder": "assets/characters/noah",
+  "scale": 0.555556,
+  "health": 95,
+  "walk_speed": 4.5,
+  "announcer": "assets/sounds/announcer/select/noah.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 5
+    },
+    "punch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 8,
+      "reach": 60,
+      "hit_height": 55,
+      "hit_offset_y": 85,
+      "active_frames": [
+        2
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 12,
+      "loop": false,
+      "damage": 12,
+      "reach": 72,
+      "hit_height": 55,
+      "hit_offset_y": 55,
+      "active_frames": [
+        2
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 12,
+      "loop": false,
+      "damage": 18,
+      "reach": 85,
+      "hit_height": 70,
+      "hit_offset_y": 80,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 5
+    },
+    "ranged": {
+      "fps": 12,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        2
+      ],
+      "launch_height": "high",
+      "speed": 9,
+      "trajectory": "bounce",
+      "bounce_damping": 0.55,
+      "projectile_mode": "random_spin",
+      "loop_sound": true,
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "ko": {
+      "fps": 5,
+      "loop": false,
+      "frames": 5
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 5
+    }
+  },
+  "projectile_groups": [
+    4,
+    4,
+    4,
+    4
+  ],
+  "sounds": {
+    "hit": [
+      "sounds/hit/noah_67.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/noah_projectile.mp3"
+    ]
+  }
+}

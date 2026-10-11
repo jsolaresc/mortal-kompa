@@ -1,0 +1,127 @@
+{
+  "name": "Omar",
+  "sprite_folder": "assets/characters/omar",
+  "scale": 0.555556,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/omar.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 5
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 62,
+      "hit_offset_y": 104,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 68,
+      "hit_offset_y": 78,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 83,
+      "hit_offset_y": 88,
+      "active_frames": [
+        3,
+        4
+      ],
+      "frames": 5
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "random_spin",
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 6
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 4
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "random_spin",
+      "launch_offset_mult": 1.18,
+      "frames": 4
+    }
+  },
+  "projectile_groups": [
+    4,
+    4,
+    4
+  ],
+  "sounds": {
+    "hit": [
+      "sounds/hit/omar.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/omar_projectile.mp3"
+    ]
+  }
+}

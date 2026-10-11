@@ -1,0 +1,111 @@
+{
+  "name": "Javier",
+  "sprite_folder": "assets/characters/javier",
+  "scale": 0.8227,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/javier.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 5
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 66,
+      "hit_offset_y": 110,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 72,
+      "hit_offset_y": 83,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 88,
+      "hit_offset_y": 94,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "low",
+      "projectile_mode": "spin",
+      "trajectory": "bounce",
+      "bounce_damping": 0.55,
+      "kick_height": 271,
+      "gravity_mult": 6,
+      "frames": 5
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 5
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    }
+  },
+  "projectile_frames": 4,
+  "sounds": {
+    "ranged": [
+      "sounds/ranged/javi_projectile.mp3"
+    ]
+  }
+}

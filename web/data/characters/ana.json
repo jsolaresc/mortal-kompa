@@ -1,0 +1,119 @@
+{
+  "name": "Ana",
+  "sprite_folder": "assets/characters/ana",
+  "scale": 0.952,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/ana.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 4
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 5
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 65,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2
+      ],
+      "frames": 3
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 80,
+      "hit_height": 65,
+      "hit_offset_y": 75,
+      "active_frames": [
+        2
+      ],
+      "frames": 3
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 100,
+      "hit_height": 80,
+      "hit_offset_y": 85,
+      "active_frames": [
+        3,
+        4
+      ],
+      "frames": 6
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 4
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 5
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "launch_offset_mult": 1.18,
+      "frames": 4
+    }
+  },
+  "projectile_frames": 4,
+  "sounds": {
+    "hit": [
+      "sounds/hit/ana.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/ana_projectile.mp3"
+    ]
+  }
+}

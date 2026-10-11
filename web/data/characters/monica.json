@@ -1,0 +1,126 @@
+{
+  "name": "Mónica",
+  "sprite_folder": "assets/characters/monica",
+  "scale": 0.6953,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/monica.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 5
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 4
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 65,
+      "hit_offset_y": 75,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 80,
+      "hit_offset_y": 85,
+      "active_frames": [
+        3,
+        4
+      ],
+      "frames": 5
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "random_spin",
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 5
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "random_spin",
+      "frames": 4
+    }
+  },
+  "projectile_groups": [
+    4,
+    4,
+    4
+  ],
+  "sounds": {
+    "hit": [
+      "sounds/hit/monica.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/monica_projectile.mp3"
+    ]
+  }
+}

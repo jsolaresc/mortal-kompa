@@ -1,0 +1,115 @@
+{
+  "name": "Joaquín",
+  "sprite_folder": "assets/characters/joaquin",
+  "scale": 0.7436,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/joaquin.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 5
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 65,
+      "hit_offset_y": 75,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 70,
+      "hit_offset_y": 210,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 6
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 10,
+      "launch_height": "low",
+      "trajectory": "straight",
+      "projectile_mode": "spin",
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 6
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "no_flip": true,
+      "frames": 5
+    }
+  },
+  "projectile_frames": 4,
+  "sounds": {
+    "give_hit": [
+      "sounds/give_hit/joaquin.mp3"
+    ],
+    "hit": [
+      "sounds/hit/joaquin.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/joaquin_projectile.mp3"
+    ]
+  }
+}

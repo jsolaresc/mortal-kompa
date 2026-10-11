@@ -1,0 +1,55 @@
+{
+  "stages": [
+    {
+      "id": "claypole",
+      "name": "Claypole",
+      "image": "assets/stages/Claypole.jpg",
+      "music": "assets/stages/Claypole.mp3"
+    },
+    {
+      "id": "dust_ii",
+      "name": "Dust II",
+      "image": "assets/stages/Dust II.jpg",
+      "music": "assets/stages/Dust II.mp3"
+    },
+    {
+      "id": "emilio_mitre",
+      "name": "Emilio Mitre",
+      "image": "assets/stages/Emilio Mitre.jpg",
+      "music": "assets/stages/Emilio Mitre.mp3"
+    },
+    {
+      "id": "final_destination",
+      "name": "Final Destination",
+      "image": "assets/stages/Final Destination.mp4",
+      "music": "assets/stages/Final Destination.mp3",
+      "secret": true,
+      "thumb_image": "assets/stages/Final Destination.jpg"
+    },
+    {
+      "id": "living_forest",
+      "name": "Living Forest",
+      "image": "assets/stages/Living Forest.mp4",
+      "music": "assets/stages/Living Forest.mp3",
+      "thumb_image": "assets/stages/Living Forest.jpg"
+    },
+    {
+      "id": "luna_park",
+      "name": "Luna Park",
+      "image": "assets/stages/Luna Park.jpg",
+      "music": "assets/stages/Luna Park.mp3"
+    },
+    {
+      "id": "remedios",
+      "name": "Remedios",
+      "image": "assets/stages/Remedios.jpg",
+      "music": "assets/stages/Remedios.mp3"
+    },
+    {
+      "id": "world_tournament",
+      "name": "World Tournament",
+      "image": "assets/stages/World Tournament.jpg",
+      "music": "assets/stages/World Tournament.mp3"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "name": "Nico",
+  "sprite_folder": "assets/characters/nico",
+  "scale": 0.8042,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/nico.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 4
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 95,
+      "hit_height": 65,
+      "hit_offset_y": 109,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 115,
+      "hit_height": 71,
+      "hit_offset_y": 82,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 115,
+      "hit_height": 87,
+      "hit_offset_y": 93,
+      "active_frames": [
+        3,
+        4
+      ],
+      "frames": 5
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 22,
+      "launch_height": "high",
+      "trajectory": "straight",
+      "launch_offset_mult": 1.0591,
+      "visual_y_offset": 68,
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 6
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 4
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 22,
+      "launch_height": "crouch_mid",
+      "trajectory": "straight",
+      "launch_offset_mult": 1.0591,
+      "visual_y_offset": 68,
+      "frames": 4
+    }
+  },
+  "projectile_frames": 1,
+  "sounds": {
+    "give_hit": [
+      "sounds/give_hit/nico_give_hit.mp3"
+    ],
+    "hit": [
+      "sounds/hit/nico.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/nico_projectile.mp3"
+    ],
+    "win": [
+      "sounds/win/nico_win.mp3"
+    ]
+  }
+}

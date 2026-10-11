@@ -1,0 +1,30 @@
+{
+  "menu": [
+    "assets/sounds/music/DBZ_Cumbia.mp3",
+    "assets/sounds/music/Gilda_Evangelion.mp3",
+    "assets/sounds/music/Mortal_Kompa.mp3",
+    "assets/sounds/music/Mortal_Kompa_Remix.mp3",
+    "assets/sounds/music/Pinas_Van_Pinas_Vienen.mp3",
+    "assets/sounds/music/Rocky_Cumbia.mp3",
+    "assets/sounds/music/Se re pudrió.mp3",
+    "assets/sounds/music/Street_Fighter_cumbia.mp3",
+    "assets/sounds/music/Yo_quiero_un_heroe.mp3"
+  ],
+  "menu_voices": [
+    "assets/sounds/menu_voices/Ana - Crazy.mp3",
+    "assets/sounds/menu_voices/Ana - Edesur.mp3",
+    "assets/sounds/menu_voices/Ana - Joaquín es joda.mp3",
+    "assets/sounds/menu_voices/Jair - Mortal Kompa 1.mp3",
+    "assets/sounds/menu_voices/Jair - Mortal Kompa 2.mp3",
+    "assets/sounds/menu_voices/Jair sobre Mateo.mp3",
+    "assets/sounds/menu_voices/Mónica - Una línea.mp3",
+    "assets/sounds/menu_voices/Nico - A Mateo.mp3",
+    "assets/sounds/menu_voices/Nico - gorda sapo.mp3",
+    "assets/sounds/menu_voices/Nico - no me toskees.mp3",
+    "assets/sounds/menu_voices/Nico - tú tienes los optimus prime.mp3",
+    "assets/sounds/menu_voices/Sonia - Anita.mp3",
+    "assets/sounds/menu_voices/a mí me sobra plata.mp3",
+    "assets/sounds/menu_voices/el perro pierde la mañana pero no el coso.mp3",
+    "assets/sounds/menu_voices/vamono a irno.mp3"
+  ]
+}

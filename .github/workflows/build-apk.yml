@@ -10,6 +10,12 @@ name: Build APK
 on:
   push:
     branches: [main]
+    # la versión de navegador (web/) se publica aparte (ver pages.yml)
+    paths-ignore:
+      - "web/**"
+      - "tools/build_web.py"
+      - ".github/workflows/pages.yml"
+      - "README.md"
   workflow_dispatch:
 
 permissions:

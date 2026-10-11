@@ -1,0 +1,125 @@
+{
+  "name": "Sonia",
+  "sprite_folder": "assets/characters/sonia",
+  "scale": 0.9843,
+  "health": 100,
+  "walk_speed": 4,
+  "announcer": "assets/sounds/announcer/select/sonia.wav",
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": 4
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": 4
+    },
+    "jump": {
+      "fps": 8,
+      "loop": false,
+      "frames": 4
+    },
+    "punch": {
+      "fps": 16,
+      "loop": false,
+      "damage": 8,
+      "reach": 65,
+      "hit_height": 60,
+      "hit_offset_y": 100,
+      "active_frames": [
+        2
+      ],
+      "frames": 4
+    },
+    "kick": {
+      "fps": 14,
+      "loop": false,
+      "damage": 12,
+      "reach": 80,
+      "hit_height": 65,
+      "hit_offset_y": 75,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "special": {
+      "fps": 14,
+      "loop": false,
+      "damage": 20,
+      "reach": 100,
+      "hit_height": 80,
+      "hit_offset_y": 85,
+      "active_frames": [
+        2,
+        3
+      ],
+      "frames": 4
+    },
+    "ranged": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "high",
+      "projectile_mode": "spin",
+      "loop_sound": true,
+      "frames": 4
+    },
+    "block": {
+      "fps": 6,
+      "loop": true,
+      "frames": 3
+    },
+    "ko": {
+      "fps": 6,
+      "loop": false,
+      "frames": 4
+    },
+    "crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 4
+    },
+    "block_crouch": {
+      "fps": 6,
+      "loop": true,
+      "frames": 2
+    },
+    "win": {
+      "fps": 6,
+      "loop": true,
+      "frames": 4
+    },
+    "ranged_crouch": {
+      "fps": 14,
+      "loop": false,
+      "damage": 4,
+      "active_frames": [
+        3
+      ],
+      "speed": 9,
+      "launch_height": "crouch_mid",
+      "projectile_mode": "spin",
+      "loop_sound": true,
+      "launch_offset_mult": 1.35,
+      "frames": 4
+    }
+  },
+  "projectile_frames": 2,
+  "sounds": {
+    "hit": [
+      "sounds/hit/sonia.mp3",
+      "sounds/hit/sonia_ay.mp3"
+    ],
+    "ranged": [
+      "sounds/ranged/sonia_projectile.mp3"
+    ]
+  }
+}
