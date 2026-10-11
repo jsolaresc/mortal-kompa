@@ -16,6 +16,8 @@ on:
       - "tools/build_web.py"
       - ".github/workflows/pages.yml"
       - "README.md"
+      - "index.html"
+      - ".nojekyll"
   workflow_dispatch:
 
 permissions:

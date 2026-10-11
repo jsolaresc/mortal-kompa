@@ -46,9 +46,9 @@ Todo sale del proyecto del APK. Desde la raíz del repo:
 - Los escenarios que en PC son video, acá también (en 720p, livianos).
 
 ## Publicación
-`.github/workflows/pages.yml` publica la carpeta `web/` en GitHub Pages cada vez
-que cambia. Requiere (una sola vez) que el repo sea público y en
-*Settings > Pages > Build and deployment > Source* elegir **GitHub Actions**.
+Pages está en *Deploy from a branch: main / (root)*: GitHub publica el repo y el
+`index.html` de la raíz redirige a esta carpeta. Cada push a `main` actualiza la
+página en un par de minutos: https://jsolaresc.github.io/mortal-kompa/
 
 El motor JS es el de Mortal Kompa Político (misma jugabilidad), con la música en
 lista, las vocecitas de menú, la pose aparte para el lado derecho y escenarios sin

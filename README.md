@@ -6,7 +6,7 @@ Este repo tiene dos versiones de Mortal Kompa (V.1.3):
   `main` compila el APK solo (pestaña **Actions**) y lo publica en **Releases**.
 - **Navegador** (carpeta `web/`, JavaScript). Se juega desde una página, en PC,
   Android o iPhone, con multijugador **online por link**. Se publica sola en
-  GitHub Pages (ver `web/README.md`).
+  GitHub Pages: https://jsolaresc.github.io/mortal-kompa/ (ver `web/README.md`).
 
 Ninguna de las dos toca la versión instalable de PC (la de escenarios en video).
 

@@ -1,14 +1,11 @@
 # Publica la versión de NAVEGADOR (carpeta web/) en GitHub Pages.
-# Corre con cada push que toque web/ (o a mano desde Actions > "Publicar web").
-# Requisito (una sola vez): repo público y Settings > Pages > Source: "GitHub Actions".
+# HOY Pages está configurado como "Deploy from a branch: main / (root)": publica
+# el repo entero y el index.html de la raíz redirige a web/. Este workflow queda
+# solo para correr a mano, por si algún día se cambia Settings > Pages > Source
+# a "GitHub Actions" (link más corto, sin /web/).
 name: Publicar web
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
