@@ -10,17 +10,27 @@ import { ok } from "../input.js";
 import { announcerNamePath } from "../match.js";
 
 const RANDOM = "__random__";
-const P_COLORS = ["#f0c828", "#4aa8ff"];
-const SIDE_W = 230;
+// Mismos colores y medidas que la selección de Mortal Kompa de PC
+// (engine/menu.py, calibrado sobre el lienzo base 960x540).
+const P1_COLOR = "rgb(80,170,240)";
+const P2_COLOR = "rgb(240,80,90)";
+const CPU_COLOR = "rgb(240,200,50)";
+const FRAME_COLOR = "rgb(45,45,52)";
+const GRID_TOP = 70, GRID_BOTTOM_MARGIN = 95;
+const SIDE_PANEL_W = 286, SIDE_MARGIN = 20, GRID_SIDE_GAP = 20;
+const CELL_MIN = 34, CELL_MAX = 120, GAP = 10;
+const SEL_FRAME_PAD = 8 * 0.7;
 
-function gridLayout(n, availW, availH, gap = 10) {
+function gridLayout(n, availW, availH, gap = GAP) {
   let best = null;
   for (let cols = 1; cols <= n; cols++) {
     const rows = Math.ceil(n / cols);
     const cell = Math.min((availW - (cols - 1) * gap) / cols, (availH - (rows - 1) * gap) / rows);
+    if (cell <= 0) continue;
     if (!best || cell > best.cell) best = { cell, cols, rows };
   }
-  best.cell = Math.max(48, Math.min(130, best.cell));
+  best = best || { cell: CELL_MIN, cols: 1, rows: n };
+  best.cell = Math.max(CELL_MIN, Math.min(CELL_MAX, best.cell));
   return best;
 }
 
@@ -36,17 +46,34 @@ export function drawRandomTile(ctx, x, y, s) {
   UI.text(ctx, "?", x + s / 2, y + s / 2 + 2, { size: s * 0.6, color: COLORS.yellow });
 }
 
+// imagen redondeada dentro de un cuadrado (miniatura de selección)
+function drawThumb(ctx, img, x, y, s, r = 8) {
+  if (!img) return;
+  ctx.save(); UI.roundRect(ctx, x, y, s, s, r); ctx.clip();
+  ctx.drawImage(img, x, y, s, s); ctx.restore();
+}
+
+function drawFlipped(ctx, img, x, y, w, h, flip) {
+  if (!img) return;
+  ctx.save();
+  if (flip) { ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, h); }
+  else ctx.drawImage(img, x, y, w, h);
+  ctx.restore();
+}
+
 /**
  * players: [{ input, cpu:bool, label }]  (1 = solo, 2 = versus/cpu)
  * onDone([{slug, random}]), onBack()
  */
 export class CharSelectScene {
-  constructor(app, { players, title = "ELEGÍ TU LUCHADOR", onDone, onBack, subtitle = null, allowRandom = true }) {
+  constructor(app, { players, title = null, onDone, onBack, subtitle = null, allowRandom = true }) {
     this.app = app;
     this.players = players;
     this.onDone = onDone;
     this.onBack = onBack;
-    this.title = title;
+    const solo = players.length === 1;
+    const cpu = players.some((p) => p.cpu);
+    this.title = title || (solo ? "ELEGÍ TU LUCHADOR" : "SELECCIONÁ PERSONAJE" + (cpu ? "" : "S"));
     this.subtitle = subtitle;
     this.cells = DB.roster.map((c) => ({ slug: c.slug, entry: c }));
     if (allowRandom) this.cells.push({ slug: RANDOM, entry: null });
@@ -59,27 +86,26 @@ export class CharSelectScene {
   }
 
   layout(view) {
-    const solo = this.players.length === 1;
-    const side = solo ? SIDE_W : SIDE_W;
-    const availW = view.w - 2 * (side + 30);
-    const g = gridLayout(this.cells.length, availW, C.BASE_H - 200);
-    const gw = g.cols * g.cell + (g.cols - 1) * 10;
-    const gh = g.rows * g.cell + (g.rows - 1) * 10;
-    const x0 = view.w / 2 - gw / 2;
-    const y0 = 110 + Math.max(0, (C.BASE_H - 200 - gh) / 2);
+    const availW = view.w - 2 * (SIDE_MARGIN + SIDE_PANEL_W + GRID_SIDE_GAP);
+    const availH = C.BASE_H - GRID_TOP - GRID_BOTTOM_MARGIN;
+    const g = gridLayout(this.cells.length, availW, availH);
+    const gw = g.cols * g.cell + (g.cols - 1) * GAP;
+    const gh = g.rows * g.cell + (g.rows - 1) * GAP;
+    const x0 = Math.floor(view.w / 2 - gw / 2);
+    const y0 = GRID_TOP + Math.max(0, Math.floor((availH - gh) / 2));
     return { ...g, x0, y0 };
   }
 
   cellRect(L, i) {
-    return { x: L.x0 + (i % L.cols) * (L.cell + 10), y: L.y0 + Math.floor(i / L.cols) * (L.cell + 10), w: L.cell, h: L.cell };
+    return { x: L.x0 + (i % L.cols) * (L.cell + GAP), y: L.y0 + Math.floor(i / L.cols) * (L.cell + GAP), w: L.cell, h: L.cell };
   }
 
   move(p, dx, dy) {
     const n = this.cells.length;
-    const cols = this._cols || 5;
+    const cols = this._cols || 3;
     let i = this.cursor[p];
     if (dx) i = (i + dx + n) % n;
-    if (dy) { i += dy * cols; if (i < 0) i += Math.ceil(n / cols) * cols; if (i >= n) i = i % cols; i = Math.min(n - 1, Math.max(0, i)); }
+    if (dy) i = (((i + dy * cols) % n) + n) % n;   // igual que en PC: da la vuelta
     this.cursor[p] = i;
   }
 
@@ -141,62 +167,72 @@ export class CharSelectScene {
     });
   }
 
-  drawSide(ctx, view, p, x, w) {
-    const cell = this.cells[this.cursor[p]];
-    const pick = this.picks[p];
-    const entry = pick ? (pick.random ? null : DB.bySlug[pick.slug]) : cell.entry;
-    const col = P_COLORS[p];
-    const top = 100, h = C.BASE_H - 170;
-    // pedestal
-    const g = ctx.createRadialGradient(x + w / 2, top + h, 10, x + w / 2, top + h, w * 0.7);
-    g.addColorStop(0, col + "55"); g.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = g; ctx.fillRect(x, top, w, h + 20);
-    if (entry && p === 1 && entry.pose2) UI.drawImageContain(ctx, entry.pose2, x + 10, top, w - 20, h, false);
-    else if (entry && entry.pose) UI.drawImageContain(ctx, entry.pose, x + 10, top, w - 20, h, p === 1);
-    else if (!entry && UI.IMG.random_pose) UI.drawImageContain(ctx, UI.IMG.random_pose, x + 10, top, w - 20, h, p === 1);
-    else if (!entry) {
-      UI.text(ctx, "?", x + w / 2, top + h / 2, { size: 150, color: "#2a2a34", shadow: false, stroke: 6, strokeColor: "#555" });
-    }
-    const label = this.players[p].label || `J${p + 1}`;
-    UI.text(ctx, label, x + w / 2, top - 8, { size: 18, color: col });
-    const name = entry ? entry.name : "Aleatorio";
-    UI.text(ctx, this.confirmed[p] ? name.toUpperCase() : name, x + w / 2, top + h + 32, { size: 26, color: this.confirmed[p] ? col : "#fff", stroke: 5 });
-    if (this.confirmed[p]) UI.text(ctx, "¡LISTO!", x + w / 2, top + h + 60, { size: 15, color: col });
+  // índice de celda que corresponde a lo elegido por p (Aleatorio -> su celda)
+  pickedCell(p) {
+    const pk = this.picks[p];
+    if (!pk) return -1;
+    return pk.random ? this.cells.findIndex((c) => c.slug === RANDOM) : this.cells.findIndex((c) => c.slug === pk.slug);
+  }
+
+  shownEntry(p) {
+    const pk = this.picks[p];
+    if (pk) return pk.random ? null : DB.bySlug[pk.slug];
+    return this.cells[this.cursor[p]].entry;
   }
 
   draw(ctx, view) {
-    UI.menuBackground(ctx, view, this.app.t);
-    UI.title(ctx, view, this.title, 40);
-    if (this.subtitle) UI.text(ctx, this.subtitle, view.w / 2, 74, { size: 16, color: "#ccc" });
+    UI.menuBackground(ctx, view, this.app.t, "select", 0);
+    const solo = this.players.length === 1;
+    const p2cpu = !solo && this.players[1].cpu;
+    const p2Color = p2cpu ? CPU_COLOR : P2_COLOR;
     const L = this.layout(view);
     this._cols = L.cols;
+    const picked = this.players.map((_, p) => this.pickedCell(p));
+
     this.cells.forEach((c, i) => {
       const r = this.cellRect(L, i);
-      if (c.entry) {
-        ctx.save();
-        UI.roundRect(ctx, r.x, r.y, r.w, r.h, 10);
-        ctx.clip();
-        UI.drawImageCover(ctx, c.entry.selection, r.x, r.y, r.w, r.h);
-        ctx.restore();
-        UI.roundRect(ctx, r.x, r.y, r.w, r.h, 10);
-        ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,0.25)"; ctx.stroke();
-      } else drawRandomTile(ctx, r.x, r.y, r.w);
+      const p1Here = this.cursor[0] === i;
+      const p2Here = !solo && this.cursor[1] === i;
+      // el marco ES el color del jugador; si coinciden, mitad y mitad
+      UI.roundRect(ctx, r.x, r.y, r.w, r.h, 8);
+      ctx.fillStyle = p1Here ? P1_COLOR : p2Here ? p2Color : FRAME_COLOR;
+      ctx.fill();
+      if (p1Here && p2Here) {
+        ctx.save(); ctx.beginPath(); ctx.rect(r.x + r.w / 2, r.y, r.w / 2, r.h); ctx.clip();
+        UI.roundRect(ctx, r.x, r.y, r.w, r.h, 8); ctx.fillStyle = p2Color; ctx.fill(); ctx.restore();
+      }
+      const s = r.w - SEL_FRAME_PAD, o = SEL_FRAME_PAD / 2;
+      if (c.entry) drawThumb(ctx, c.entry.selection, r.x + o, r.y + o, s, 8);
+      else if (UI.IMG.random_sel) drawThumb(ctx, UI.IMG.random_sel, r.x + o, r.y + o, s, 8);
+      else drawRandomTile(ctx, r.x + o, r.y + o, s);
+      if (picked[0] === i && this.confirmed[0]) {
+        ctx.beginPath(); ctx.arc(r.x + 14, r.y + 14, 10, 0, Math.PI * 2); ctx.fillStyle = P1_COLOR; ctx.fill();
+      }
+      if (!solo && picked[1] === i && this.confirmed[1]) {
+        ctx.beginPath(); ctx.arc(r.x + r.w - 14, r.y + 14, 10, 0, Math.PI * 2); ctx.fillStyle = p2Color; ctx.fill();
+      }
       UI.addHit(r, () => this.tap(i));
     });
-    // cursores
-    this.players.forEach((pl, p) => {
-      const r = this.cellRect(L, this.cursor[p]);
-      const inset = p === 1 && this.cursor[0] === this.cursor[1] ? 5 : 0;
-      UI.roundRect(ctx, r.x - 4 + inset, r.y - 4 + inset, r.w + 8 - 2 * inset, r.h + 8 - 2 * inset, 12);
-      ctx.lineWidth = this.confirmed[p] ? 6 : 4;
-      ctx.strokeStyle = P_COLORS[p];
-      ctx.stroke();
-      UI.text(ctx, pl.cpu ? "CPU" : `J${p + 1}`, r.x + (p === 0 ? 16 : r.w - 16), r.y + 12, { size: 13, color: P_COLORS[p], stroke: 3 });
-    });
-    this.drawSide(ctx, view, 0, 20, SIDE_W);
-    if (this.players.length > 1) this.drawSide(ctx, view, 1, view.w - 20 - SIDE_W, SIDE_W);
-    UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.cancel(0), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
-    UI.footer(ctx, view, this.app.isTouchDevice ? "Tocá una cara para marcarla y otra vez para elegirla" : "Moverse con las flechas/stick · Puño o ENTER elige · Patada o ESC deshace");
+
+    // poses a los costados (mismo tamaño que en PC, sin brillos)
+    const py = C.BASE_H / 2 - SIDE_PANEL_W / 2;
+    const e1 = this.shownEntry(0);
+    drawFlipped(ctx, e1 ? e1.pose : UI.IMG.random_pose, SIDE_MARGIN, py, SIDE_PANEL_W, SIDE_PANEL_W, false);
+    if (!solo) {
+      const e2 = this.shownEntry(1);
+      const x2 = view.w - SIDE_MARGIN - SIDE_PANEL_W;
+      if (e2 && e2.pose2) drawFlipped(ctx, e2.pose2, x2, py, SIDE_PANEL_W, SIDE_PANEL_W, false);
+      else drawFlipped(ctx, e2 ? e2.pose : UI.IMG.random_pose, x2, py, SIDE_PANEL_W, SIDE_PANEL_W, true);
+      const l2 = p2cpu ? "CPU" : `${this.players[1].label || "J2"}: ${e2 ? e2.name : "Aleatorio"}`;
+      UI.text(ctx, l2, view.w - 40, C.BASE_H / 2 + 240, { size: 20, color: p2Color, align: "right", baseline: "top" });
+    }
+
+    UI.text(ctx, this.title, view.w / 2, 25, { size: 38, color: COLORS.yellow });
+    if (this.subtitle) UI.text(ctx, this.subtitle, view.w / 2, 54, { size: 15, color: "#ddd" });
+    UI.text(ctx, `${this.players[0].label || "J1"}: ${e1 ? e1.name : "Aleatorio"}`, 40, C.BASE_H / 2 + 240, { size: 20, color: P1_COLOR, align: "left", baseline: "top" });
+
+    if (this.app.isTouchDevice) UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.cancel(0), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
+    UI.footer(ctx, view, this.app.isTouchDevice ? "Tocá un luchador para verlo y otra vez para elegirlo" : "Puño o ENTER confirma · Patada o ESC vuelve (J1)", C.BASE_H - 25);
   }
 }
 

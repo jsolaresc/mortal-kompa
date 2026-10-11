@@ -12,19 +12,28 @@ import { DB, randomStage, secretStage } from "../assets.js";
 import { CPUInput, ok } from "../input.js";
 import { Match } from "../match.js";
 import { CharSelectScene, drawRandomTile } from "./select.js";
+
+function drawRounded(ctx, img, x, y, s, r) {
+  if (!img) return;
+  ctx.save(); UI.roundRect(ctx, x, y, s, s, r); ctx.clip();
+  ctx.drawImage(img, x, y, s, s); ctx.restore();
+}
 import * as Flow from "../flow.js";
 
 const DIFFICULTY_STEP = 1.05;
 const BOSS_MULT = 1.20;
-const FLOOR_H = 92;
+// medidas de la Torre de Mortal Kompa de PC (engine/tower.py, base 960x540)
+const FLOOR_H = 130;
+const FLOOR_GAP = 24;
+const POSE_SIZE = 286;
+const CELL = 100, THUMB = 92;
+const PLAYER_BLUE = "rgb(80,170,240)", RIVAL_YELLOW = "rgb(240,200,50)", OTHER_GRAY = "rgb(90,90,100)";
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 export function startTower(app, startLevel) {
   app.setScene(new CharSelectScene(app, {
     players: [{ input: app.inputs[0] }],
-    title: "TORRE DE BATALLA",
-    subtitle: "Elegí tu luchador",
     onBack: () => Flow.onePlayerMenu(app, 0),
     onDone: (picks) => {
       const me = picks[0].slug;
@@ -84,52 +93,72 @@ class TowerScene {
     }));
   }
   draw(ctx, view) {
-    UI.menuBackground(ctx, view, this.app.t, "tower", 0.2);
+    UI.menuBackground(ctx, view, this.app.t, "tower", 0);
     const t = this.tower;
     const n = t.opps.length;
-    UI.title(ctx, view, `PISO ${t.floor + 1} DE ${n}`, 40);
-    // torre (columna central): piso 0 abajo
-    const cx = view.w / 2;
-    const baseY = C.BASE_H - 110;
+    const X = view.pad || 0;        // el diseño es de 960 de ancho: centrado en pantallas más anchas
+    const baseY = C.BASE_H - 110;   // altura del piso actual
     const scroll = this.scrollNow ?? this.scroll;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(cx - 170, 70, 340, C.BASE_H - 120); ctx.clip();
+    const me = DB.bySlug[t.me];
+
+    // pose grande del jugador, a la izquierda (anclada por los pies)
+    if (me.pose) ctx.drawImage(me.pose, X + 130 - POSE_SIZE / 2, C.BASE_H - 30 - POSE_SIZE, POSE_SIZE, POSE_SIZE);
+
+    const playerCx = X + 320;
+    const rivalsCx = playerCx + 100 + FLOOR_GAP;
+
+    // columna de rivales: van subiendo
     for (let i = 0; i < n; i++) {
       const y = baseY - i * FLOOR_H + scroll;
-      if (y < 0 || y > C.BASE_H) continue;
+      if (y < -FLOOR_H || y > C.BASE_H + FLOOR_H) continue;
       const o = t.opps[i];
-      const cur = i === t.floor;
-      const done = i < t.floor;
-      UI.roundRect(ctx, cx - 160, y - 38, 320, 76, 12);
-      ctx.fillStyle = cur ? "rgba(240,200,40,0.18)" : done ? "rgba(40,200,90,0.12)" : "rgba(255,255,255,0.06)";
+      const beaten = i < t.floor;
+      const rx = rivalsCx - CELL / 2, ry = y - CELL / 2;
+      ctx.save();
+      if (beaten) ctx.globalAlpha = 0.3;
+      UI.roundRect(ctx, rx, ry, CELL, CELL, 10);
+      ctx.fillStyle = i === t.floor ? RIVAL_YELLOW : OTHER_GRAY;
       ctx.fill();
-      ctx.lineWidth = cur ? 3 : 1.5; ctx.strokeStyle = cur ? COLORS.yellow : "rgba(255,255,255,0.25)"; ctx.stroke();
-      const ent = DB.bySlug[o.slug];
-      const sx = cx - 150, sy = y - 30;
-      if (o.boss) {
-        drawRandomTile(ctx, sx, sy, 60);
-      } else {
-        ctx.save(); UI.roundRect(ctx, sx, sy, 60, 60, 8); ctx.clip();
-        UI.drawImageCover(ctx, ent.selection, sx, sy, 60, 60); ctx.restore();
-      }
-      UI.text(ctx, o.boss ? "???" : o.name, cx - 75, y - 8, { size: 20, align: "left", color: cur ? COLORS.yellow : "#fff" });
-      UI.text(ctx, done ? "VENCIDO" : cur ? "PRÓXIMO RIVAL" : `Piso ${i + 1}${o.boss ? " · JEFE FINAL" : ""}`, cx - 75, y + 16, { size: 13, align: "left", color: done ? COLORS.green : "#bbb" });
+      const img = o.boss ? UI.IMG.random_sel : DB.bySlug[o.slug].selection;
+      if (img) drawRounded(ctx, img, rx + (CELL - THUMB) / 2, ry + (CELL - THUMB) / 2, THUMB, 10);
+      else if (o.boss) drawRandomTile(ctx, rx + (CELL - THUMB) / 2, ry + (CELL - THUMB) / 2, THUMB);
+      ctx.restore();
+      UI.text(ctx, o.boss ? "???" : o.name, rx + CELL + 16, y, { size: 20, align: "left", color: beaten ? "rgb(120,120,125)" : "rgb(230,230,230)" });
     }
-    ctx.restore();
-    // poses grandes: vos a la izquierda, rival a la derecha
-    const me = DB.bySlug[t.me];
-    UI.drawImageContain(ctx, me.pose, 30, 90, 220, C.BASE_H - 170);
-    UI.text(ctx, me.name, 140, C.BASE_H - 60, { size: 24 });
+
+    // el jugador sube en paralelo, a la altura del rival actual
+    const py = baseY - t.floor * FLOOR_H + scroll;
+    const px = playerCx - CELL / 2, pty = py - CELL / 2;
+    UI.roundRect(ctx, px, pty, CELL, CELL, 10);
+    ctx.fillStyle = PLAYER_BLUE; ctx.fill();
+    drawRounded(ctx, me.selection, px + (CELL - THUMB) / 2, pty + (CELL - THUMB) / 2, THUMB, 10);
+    UI.text(ctx, me.name, playerCx, pty + CELL + 8, { size: 20, color: "rgb(230,230,230)", baseline: "top" });
+
+    // velo arriba para que los pisos aparezcan/desaparezcan suave
+    const g = ctx.createLinearGradient(0, 0, 0, 70);
+    g.addColorStop(0, "rgba(20,20,24,1)"); g.addColorStop(1, "rgba(20,20,24,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, view.w, 70);
+
+    // piso + rival (columna derecha)
+    const textX = X + 800;
     const o = t.opps[t.floor];
     if (o) {
-      if (o.boss && UI.IMG.random_pose) UI.drawImageContain(ctx, UI.IMG.random_pose, view.w - 250, 90, 220, C.BASE_H - 170, true);
-      else if (o.boss) UI.text(ctx, "?", view.w - 140, C.BASE_H / 2, { size: 160, color: "#22222c", stroke: 6, strokeColor: "#555" });
-      else if (DB.bySlug[o.slug].pose2) UI.drawImageContain(ctx, DB.bySlug[o.slug].pose2, view.w - 250, 90, 220, C.BASE_H - 170, false);
-      else UI.drawImageContain(ctx, DB.bySlug[o.slug].pose, view.w - 250, 90, 220, C.BASE_H - 170, true);
-      UI.text(ctx, o.boss ? "???" : o.name, view.w - 140, C.BASE_H - 60, { size: 24, color: COLORS.yellow });
+      const isBoss = !!o.boss;
+      UI.text(ctx, isBoss ? "FINAL" : `PISO ${t.floor + 1} DE ${n}`, X + 130, 40, { size: 30, color: COLORS.yellow });
+      UI.text(ctx, "Rival:", textX, 90, { size: 30, color: COLORS.yellow });
+      UI.text(ctx, isBoss ? "???" : o.name, textX, 90 + 18 + 12 + 38, { size: 64, color: COLORS.yellow });
+      const pose = isBoss ? UI.IMG.random_pose : DB.bySlug[o.slug].pose;
+      if (pose) {
+        ctx.save();
+        ctx.translate(textX + POSE_SIZE / 2, C.BASE_H - 30 - POSE_SIZE);
+        ctx.scale(-1, 1);   // mirando hacia el jugador
+        ctx.drawImage(pose, 0, 0, POSE_SIZE, POSE_SIZE);
+        ctx.restore();
+      }
     }
-    UI.text(ctx, `Dificultad ${t.difficulty.toFixed(1)}`, view.w - 140, 70, { size: 14, color: "#aaa" });
-    UI.pillButton(ctx, cx, C.BASE_H - 28, "¡A PELEAR!", () => this.fight(), { size: 18, h: 38, minW: 170 });
+    // tocar / clic en cualquier lado = pelear
+    UI.addHit({ x: 0, y: 0, w: view.w, h: C.BASE_H }, () => { if (this.anim > 0.3) this.fight(); });
+    UI.footer(ctx, view, this.app.isTouchDevice ? "Tocá la pantalla para continuar" : "Puño o ENTER: continuar", C.BASE_H - 30);
   }
 }
 
