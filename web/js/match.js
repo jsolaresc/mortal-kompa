@@ -316,8 +316,6 @@ export function drawSnapshot(ctx, view, s, chars, stage) {
   });
   if (s.ph === "intro") {
     UI.centerText(ctx, view, s.sd ? "MUERTE SÚBITA" : `ROUND ${s.rn}`, C.COLORS.white);
-  } else if (s.ph === "fight" && s.pt < 0.6) {
-    UI.centerText(ctx, view, "¡PELEEN!", C.COLORS.yellow, 0, 72);
   } else if (s.ph === "roundEnd" && s.bn) {
     UI.koBanner(ctx, view, s.bn, s.pt);
   }

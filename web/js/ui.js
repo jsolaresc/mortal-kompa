@@ -220,18 +220,24 @@ export function drawHud(ctx, view, hud) {
 }
 
 export function centerText(ctx, view, str, color = COLORS.white, yOff = 0, size = 64) {
-  text(ctx, str, view.w / 2, C.BASE_H / 2 + yOff, { size, color, stroke: 8 });
+  text(ctx, str, view.w / 2, C.BASE_H / 2 + yOff, { size, color, shadow: false });
+}
+
+// título de pantalla como el de PC: sombra negra suave, sin contorno
+export function pcTitle(ctx, view, str, y, color = COLORS.yellow, size = 38) {
+  ctx.save(); ctx.globalAlpha = 140 / 255;
+  text(ctx, str, view.w / 2 + 2, y + 2, { size, color: "#000", shadow: false });
+  ctx.restore();
+  text(ctx, str, view.w / 2, y, { size, color, shadow: false });
 }
 
 export function koBanner(ctx, view, kind, t = 0) {
   if (kind === "draw") { centerText(ctx, view, "EMPATE", COLORS.yellow); return; }
   if (kind === "ko") {
-    const s = 1 + Math.max(0, 0.4 - t) * 1.5;
     ctx.save();
     ctx.translate(view.w / 2, C.BASE_H / 2);
-    ctx.scale(s, s);
     if (IMG.ko_banner) ctx.drawImage(IMG.ko_banner, -240, -82, 480, 165);
-    else text(ctx, "K.O.", 0, 0, { size: 120, color: COLORS.red, stroke: 12, strokeColor: "#200" });
+    else text(ctx, "K.O.", 0, 0, { size: 64, color: COLORS.red, shadow: false });
     ctx.restore();
     return;
   }

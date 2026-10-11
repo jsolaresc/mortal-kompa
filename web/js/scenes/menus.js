@@ -176,15 +176,17 @@ export class TournamentSizeScene {
     else if (i.justPressed("cancel")) this.onBack();
   }
   draw(ctx, view) {
-    UI.menuBackground(ctx, view, this.app.t);
-    UI.title(ctx, view, "TORNEO: ¿CUÁNTOS LUCHADORES?", 120);
-    const cx = view.w / 2, cy = 260;
-    UI.text(ctx, String(this.count), cx, cy, { size: 96, color: COLORS.yellow, stroke: 8 });
-    UI.text(ctx, "Se eligen de a uno (se pueden repetir). Las peleas las juegan J1 y J2.", cx, cy + 75, { size: 17 });
-    UI.roundButton(ctx, cx - 150, cy, 34, "−", () => { this.count = Math.max(3, this.count - 1); });
-    UI.roundButton(ctx, cx + 150, cy, 34, "+", () => { this.count = Math.min(16, this.count + 1); });
-    UI.pillButton(ctx, cx, cy + 150, "ELEGIR", () => this.onDone(this.count), { minW: 180 });
-    UI.pillButton(ctx, 80, 40, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+    ctx.fillStyle = COLORS.dark; ctx.fillRect(0, 0, view.w, C.BASE_H);
+    const cx = view.w / 2, cy = C.BASE_H / 2;
+    UI.text(ctx, "¿CUÁNTOS JUGADORES?", cx, cy - 90, { size: 20, shadow: false });
+    UI.text(ctx, String(this.count), cx, cy, { size: 64, color: COLORS.yellow, shadow: false });
+    if (this.app.isTouchDevice) {
+      UI.roundButton(ctx, cx - 130, cy, 28, "−", () => { this.count = Math.max(3, this.count - 1); });
+      UI.roundButton(ctx, cx + 130, cy, 28, "+", () => { this.count = Math.min(16, this.count + 1); });
+      UI.pillButton(ctx, cx, cy + 130, "ELEGIR", () => this.onDone(this.count), { minW: 180 });
+      UI.pillButton(ctx, 80, 40, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+    }
+    UI.footer(ctx, view, this.app.isTouchDevice ? "" : "A/D cambiar · Puño o ENTER confirma · Patada o ESC vuelve", C.BASE_H - 40);
   }
 }
 

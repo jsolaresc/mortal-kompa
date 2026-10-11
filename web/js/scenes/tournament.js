@@ -12,7 +12,7 @@ import { audio } from "../audio.js";
 import { DB, randomStage, secretStage } from "../assets.js";
 import { ok } from "../input.js";
 import { Match, announcerNamePath } from "../match.js";
-import { drawRandomTile } from "./select.js";
+import { drawRandomTile, gridLayout, drawThumb, P1_COLOR, FRAME_COLOR, GRID_TOP, GRID_BOTTOM_MARGIN, SIDE_PANEL_W, SIDE_MARGIN, GRID_SIDE_GAP, GAP, SEL_FRAME_PAD } from "./select.js";
 import * as Flow from "../flow.js";
 
 export function labelPicks(picks) {
@@ -135,6 +135,10 @@ export function drawBracket(ctx, view, st, { phase = "ready", result = null, t =
 // Torneo LOCAL: se eligen N luchadores de a uno (J1), las peleas las
 // juegan J1 y J2 en el mismo equipo.
 // ---------------------------------------------------------------------
+// Igual que la de PC (engine/menu.py TournamentCharacterSelect): pose a
+// la izquierda, grilla en el medio y "Personajes elegidos" a la derecha.
+const TOURNAMENT_LIST_W = 230;
+
 class TournamentPickScene {
   constructor(app, count) {
     this.app = app; this.count = count; this.picks = []; this.cursor = 0;
@@ -143,10 +147,11 @@ class TournamentPickScene {
   update() {
     const i = this.app.anyInput;
     const n = this.cells.length;
+    const cols = this._cols || 3;
     if (i.justPressed("left")) this.cursor = (this.cursor - 1 + n) % n;
     else if (i.justPressed("right")) this.cursor = (this.cursor + 1) % n;
-    else if (i.justPressed("up")) this.cursor = Math.max(0, this.cursor - 5);
-    else if (i.justPressed("down")) this.cursor = Math.min(n - 1, this.cursor + 5);
+    else if (i.justPressed("up")) this.cursor = (((this.cursor - cols) % n) + n) % n;
+    else if (i.justPressed("down")) this.cursor = (this.cursor + cols) % n;
     else if (ok(i)) this.add(this.cursor);
     else if (i.justPressed("cancel")) this.undo();
   }
@@ -163,27 +168,40 @@ class TournamentPickScene {
     else Flow.multiplayerMenu(this.app, 1);
   }
   draw(ctx, view) {
-    UI.menuBackground(ctx, view, this.app.t);
-    UI.title(ctx, view, `TORNEO: ELEGÍ ${this.count} LUCHADORES`, 40);
-    UI.text(ctx, `${this.picks.length} de ${this.count}`, view.w / 2, 72, { size: 18, color: "#ccc" });
-    const s = 92, gap = 10, cols = 5;
-    const gx = view.w / 2 - 60 - (cols * (s + gap)) / 2;
+    UI.menuBackground(ctx, view, this.app.t, "select", 0);
+    const n = this.cells.length;
+    const availW = view.w - 2 * SIDE_MARGIN - SIDE_PANEL_W - GRID_SIDE_GAP - TOURNAMENT_LIST_W - GRID_SIDE_GAP;
+    const availH = C.BASE_H - GRID_TOP - GRID_BOTTOM_MARGIN;
+    const g = gridLayout(n, availW, availH);
+    this._cols = g.cols;
+    const gw = g.cols * g.cell + (g.cols - 1) * GAP, gh = g.rows * g.cell + (g.rows - 1) * GAP;
+    const left = SIDE_MARGIN + SIDE_PANEL_W + GRID_SIDE_GAP;
+    const right = view.w - SIDE_MARGIN - TOURNAMENT_LIST_W - GRID_SIDE_GAP;
+    const x0 = left + Math.max(0, Math.floor((right - left - gw) / 2));
+    const y0 = GRID_TOP + Math.max(0, Math.floor((availH - gh) / 2));
     this.cells.forEach((c, k) => {
-      const x = gx + (k % cols) * (s + gap), y = 100 + Math.floor(k / cols) * (s + gap);
-      portrait(ctx, c.slug, x, y, s);
-      if (k === this.cursor) { UI.roundRect(ctx, x - 4, y - 4, s + 8, s + 8, 10); ctx.lineWidth = 4; ctx.strokeStyle = COLORS.yellow; ctx.stroke(); }
-      UI.addHit({ x, y, w: s, h: s }, () => { if (this.cursor === k) this.add(k); else this.cursor = k; });
+      const x = x0 + (k % g.cols) * (g.cell + GAP), y = y0 + Math.floor(k / g.cols) * (g.cell + GAP);
+      UI.roundRect(ctx, x, y, g.cell, g.cell, 8);
+      ctx.fillStyle = k === this.cursor ? P1_COLOR : FRAME_COLOR; ctx.fill();
+      drawThumb(ctx, c.selection, x + SEL_FRAME_PAD / 2, y + SEL_FRAME_PAD / 2, g.cell - SEL_FRAME_PAD, 8);
+      UI.addHit({ x, y, w: g.cell, h: g.cell }, () => { if (this.cursor === k) this.add(k); else this.cursor = k; });
     });
+    // pose del luchador marcado (izquierda)
     const cur = this.cells[this.cursor];
-    UI.text(ctx, cur.name, gx + (cols * (s + gap)) / 2, 100 + Math.ceil(this.cells.length / cols) * (s + gap) + 20, { size: 24, color: COLORS.yellow });
-    // lista de elegidos
-    const lx = view.w - 230;
-    UI.text(ctx, "Elegidos", lx + 90, 100, { size: 18, color: COLORS.yellow });
-    labelPicks(this.picks).forEach((p, k) => {
-      UI.text(ctx, `${k + 1}. ${p.label}`, lx + (k >= 12 ? 100 : 0), 128 + (k % 12) * 24, { size: 15, align: "left" });
-    });
-    UI.pillButton(ctx, 70, 30, "◄ DESHACER", () => this.undo(), { size: 13, h: 30, minW: 110, color: "#3c3c48" });
-    UI.footer(ctx, view, "Confirmar suma al luchador · Patada/ESC deshace el último");
+    if (cur.pose) ctx.drawImage(cur.pose, SIDE_MARGIN, C.BASE_H / 2 - SIDE_PANEL_W / 2, SIDE_PANEL_W, SIDE_PANEL_W);
+    // lista de elegidos (derecha)
+    const lx = view.w - SIDE_MARGIN - TOURNAMENT_LIST_W;
+    UI.text(ctx, "Personajes elegidos", lx, GRID_TOP, { size: 20, align: "left", baseline: "top" });
+    const rowH = Math.min(28, (C.BASE_H - GRID_TOP - GRID_BOTTOM_MARGIN - 24) / Math.max(1, this.count));
+    const labeled = labelPicks(this.picks);
+    for (let k = 0; k < this.count; k++) {
+      const y = GRID_TOP + 24 + 10 + k * rowH;
+      const txt = k < labeled.length ? `${k + 1}. ${labeled[k].label}` : `${k + 1}. _ _ _`;
+      UI.text(ctx, txt, lx, y, { size: 15, align: "left", baseline: "top", color: k < labeled.length ? "#fff" : "rgb(110,110,118)" });
+    }
+    UI.text(ctx, `ELEGIR LUCHADOR ${this.picks.length + 1}`, view.w / 2, 25, { size: 38, color: COLORS.yellow });
+    if (this.app.isTouchDevice) UI.pillButton(ctx, 70, 30, "◄ DESHACER", () => this.undo(), { size: 13, h: 30, minW: 110, color: "#3c3c48" });
+    UI.footer(ctx, view, this.app.isTouchDevice ? "Tocá un luchador para verlo y otra vez para sumarlo" : "Puño o ENTER confirma · Patada o ESC deshace/vuelve", C.BASE_H - 25);
   }
 }
 

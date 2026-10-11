@@ -626,8 +626,9 @@ class GuestScene {
       drawSnapshot(ctx, view, this.snap, this.chars, this.stage);
       if (this.snap.ph === "over" && this.snap.win !== null && this.snap.win !== undefined) {
         const name = this.snap.f[this.snap.win][9];
-        UI.text(ctx, `¡${String(name).toUpperCase()} GANA LA PELEA!`, view.w / 2, 150, { size: 40, color: COLORS.yellow, stroke: 7 });
-        if (this.kind === "versus") UI.text(ctx, "Esperando al anfitrión...", view.w / 2, 330, { size: 20 });
+        UI.overlay(ctx, view, 140 / 255);
+        UI.pcTitle(ctx, view, `¡${String(name).toUpperCase()} GANA LA PELEA!`, 70);
+        if (this.kind === "versus") UI.text(ctx, "Esperando al anfitrión...", view.w / 2, C.BASE_H / 2 + 60, { size: 20 });
       }
       return;
     }

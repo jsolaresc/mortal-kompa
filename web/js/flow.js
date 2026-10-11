@@ -187,11 +187,18 @@ export class FightScene {
     const m = this.match;
     if (m.phase === "over") {
       const w = m.f[m.winner];
-      UI.text(ctx, `¡${w.name.toUpperCase()} GANA LA PELEA!`, view.w / 2, 150, { size: 40, color: COLORS.yellow, stroke: 7 });
+      const txt = `¡${w.name.toUpperCase()} GANA LA PELEA!`;
       if (this.showEnd) {
-        UI.overlay(ctx, view, 0.35);
-        UI.text(ctx, `¡${w.name.toUpperCase()} GANA LA PELEA!`, view.w / 2, 150, { size: 40, color: COLORS.yellow, stroke: 7 });
-        UI.menuList(ctx, view, this.endItems(), this.endIndex, 320, (k) => { if (m.phaseT > 0.4) this.endPick(k); });
+        // revancha: cuadro congelado + velo + título arriba + menú (igual que en PC)
+        UI.overlay(ctx, view, 140 / 255);
+        UI.pcTitle(ctx, view, txt, 70);
+        UI.menuList(ctx, view, this.endItems(), this.endIndex, C.BASE_H / 2 + 60, (k) => { if (m.phaseT > 0.4) this.endPick(k); });
+      } else {
+        // Torre / torneo: pantalla oscura con el ganador (igual que en PC)
+        ctx.fillStyle = COLORS.dark; ctx.fillRect(0, 0, view.w, C.BASE_H);
+        UI.centerText(ctx, view, txt, COLORS.yellow);
+        const msg = this.opts.overMessage ? this.opts.overMessage(m) : null;
+        if (msg) UI.text(ctx, msg, view.w / 2, C.BASE_H / 2 + 60, { size: 20, shadow: false });
       }
     }
     if (this.paused) {

@@ -12,16 +12,17 @@ import { announcerNamePath } from "../match.js";
 const RANDOM = "__random__";
 // Mismos colores y medidas que la selección de Mortal Kompa de PC
 // (engine/menu.py, calibrado sobre el lienzo base 960x540).
-const P1_COLOR = "rgb(80,170,240)";
+export const P1_COLOR = "rgb(80,170,240)";
 const P2_COLOR = "rgb(240,80,90)";
 const CPU_COLOR = "rgb(240,200,50)";
-const FRAME_COLOR = "rgb(45,45,52)";
-const GRID_TOP = 70, GRID_BOTTOM_MARGIN = 95;
-const SIDE_PANEL_W = 286, SIDE_MARGIN = 20, GRID_SIDE_GAP = 20;
-const CELL_MIN = 34, CELL_MAX = 120, GAP = 10;
-const SEL_FRAME_PAD = 8 * 0.7;
+export const FRAME_COLOR = "rgb(45,45,52)";
+export const GRID_TOP = 70, GRID_BOTTOM_MARGIN = 95;
+export const SIDE_PANEL_W = 286, SIDE_MARGIN = 20, GRID_SIDE_GAP = 20;
+const CELL_MIN = 34, CELL_MAX = 120;
+export const GAP = 10;
+export const SEL_FRAME_PAD = 8 * 0.7;
 
-function gridLayout(n, availW, availH, gap = GAP) {
+export function gridLayout(n, availW, availH, gap = GAP) {
   let best = null;
   for (let cols = 1; cols <= n; cols++) {
     const rows = Math.ceil(n / cols);
@@ -47,7 +48,7 @@ export function drawRandomTile(ctx, x, y, s) {
 }
 
 // imagen redondeada dentro de un cuadrado (miniatura de selección)
-function drawThumb(ctx, img, x, y, s, r = 8) {
+export function drawThumb(ctx, img, x, y, s, r = 8) {
   if (!img) return;
   ctx.save(); UI.roundRect(ctx, x, y, s, s, r); ctx.clip();
   ctx.drawImage(img, x, y, s, s); ctx.restore();

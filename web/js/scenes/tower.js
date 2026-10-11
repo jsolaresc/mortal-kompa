@@ -81,6 +81,12 @@ class TowerScene {
     const app = this.app;
     app.setScene(new Flow.FightScene(app, {
       match, pausers: [app.inputs[0]], overDelay: 3.5,
+      overMessage: (m) => {
+        if (m.winner !== 0) return null;
+        const next = t.floor + 1;
+        if (next >= t.opps.length) return "¡COMPLETASTE LA TORRE DE BATALLA!";
+        return t.opps[next].boss ? "¡Llegaste a la pelea FINAL!" : `Avanza al piso ${next + 1} de ${t.opps.length}`;
+      },
       onOver: (m) => {
         if (m.stage) m.stage.dispose();
         if (m.winner === 0) {
