@@ -165,7 +165,7 @@ class TournamentPickScene {
   }
   undo() {
     if (this.picks.length) this.picks.pop();
-    else Flow.multiplayerMenu(this.app, 1);
+    else Flow.localMenu(this.app, 1);
   }
   draw(ctx, view) {
     UI.menuBackground(ctx, view, this.app.t, "select", 0);
@@ -200,8 +200,11 @@ class TournamentPickScene {
       UI.text(ctx, txt, lx, y, { size: 15, align: "left", baseline: "top", color: k < labeled.length ? "#fff" : "rgb(110,110,118)" });
     }
     UI.text(ctx, `ELEGIR LUCHADOR ${this.picks.length + 1}`, view.w / 2, 25, { size: 38, color: COLORS.yellow });
-    if (this.app.isTouchDevice) UI.pillButton(ctx, 70, 30, "◄ DESHACER", () => this.undo(), { size: 13, h: 30, minW: 110, color: "#3c3c48" });
-    UI.footer(ctx, view, this.app.isTouchDevice ? "Tocá un luchador para verlo y otra vez para sumarlo" : "Puño o ENTER confirma · Patada o ESC deshace/vuelve", C.BASE_H - 25);
+    if (this.app.isTouchDevice) {
+      UI.pillButton(ctx, 70, 30, "◄ DESHACER", () => this.undo(), { size: 13, h: 30, minW: 110, color: "#3c3c48" });
+      UI.pillButton(ctx, view.w / 2, C.BASE_H - 46, "ACEPTAR", () => this.add(this.cursor), { size: 20, h: 42, minW: 200 });
+      UI.footer(ctx, view, "Tocá un luchador y después ACEPTAR", C.BASE_H - 12);
+    } else UI.footer(ctx, view, "Puño o ENTER confirma · Patada o ESC deshace/vuelve", C.BASE_H - 25);
   }
 }
 

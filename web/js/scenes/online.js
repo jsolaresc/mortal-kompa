@@ -48,13 +48,12 @@ function showPanel({ link = null, app }) {
     try { await navigator.clipboard.writeText(link); app.toast("¡Link copiado!"); }
     catch (e) { input.select(); document.execCommand && document.execCommand("copy"); app.toast("Link copiado"); }
   };
-  document.getElementById("share-wa").href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-  document.getElementById("share-mail").href = `mailto:?subject=${encodeURIComponent("Pelea en Mortal Kompa")}&body=${encodeURIComponent(msg)}`;
-  const nat = document.getElementById("share-native");
-  if (navigator.share) {
-    nat.classList.remove("hidden");
-    nat.onclick = () => navigator.share({ title: "Mortal Kompa", text: msg, url: link }).catch(() => {});
-  } else nat.classList.add("hidden");
+  // "Compartir": menú nativo del celular (WhatsApp, mail, etc.); en la PC,
+  // donde casi nunca existe, abre WhatsApp con el mensaje armado
+  document.getElementById("share-native").onclick = () => {
+    if (navigator.share) navigator.share({ title: "Mortal Kompa", text: msg, url: link }).catch(() => {});
+    else window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+  };
 }
 function hidePanel() { panel().classList.add("hidden"); }
 
@@ -148,9 +147,10 @@ class HostSession {
   }
 }
 
-export function hostOnline(app) {
+export function hostOnline(app, mode = "versus") {
   if (app.net && app.net.close) app.net.close();
   app.net = new HostSession(app);
+  app.net.mode = mode;   // "versus" (2 jugadores) | "tournament"
   app.setScene(new HostLobbyScene(app));
 }
 
@@ -167,25 +167,31 @@ class HostLobbyScene {
   exit() { hidePanel(); }
   items() {
     const n = this.net.clients.size;
-    return [
-      { label: "Pelea 1 vs 1", ok: n >= 1, act: () => host1v1(this.app) },
-      { label: "Torneo", ok: n >= 2, act: () => hostTournament(this.app) },
-      { label: "Cerrar sala", ok: true, act: () => { this.net.close(); Flow.multiplayerMenu(this.app, 2); } },
-    ];
+    const close = { label: "Cerrar sala", ok: true, act: () => this.closeRoom() };
+    if (this.net.mode === "tournament") {
+      return [{ label: "Empezar torneo", ok: n >= 2, act: () => hostTournament(this.app), why: "El torneo necesita 3 jugadores o más" }, close];
+    }
+    return [{ label: "Empezar pelea", ok: n >= 1, act: () => host1v1(this.app), why: "Falta que entre alguien con tu link" }, close];
+  }
+  closeRoom() {
+    const idx = this.net.mode === "tournament" ? 1 : 0;
+    this.net.close();
+    Flow.onlineMenu(this.app, idx);
   }
   update() {
     const i = this.app.anyInput;
     const items = this.items();
     if (i.justPressed("up")) this.index = (this.index + items.length - 1) % items.length;
     else if (i.justPressed("down")) this.index = (this.index + 1) % items.length;
-    else if (ok(i)) { const it = items[this.index]; if (it.ok) it.act(); else this.app.toast(this.index === 0 ? "Falta que entre alguien con tu link" : "El torneo necesita 3 jugadores o más"); }
-    else if (i.justPressed("cancel")) { this.net.close(); Flow.multiplayerMenu(this.app, 2); }
+    else if (ok(i)) { const it = items[this.index]; if (it.ok) it.act(); else this.app.toast(it.why); }
+    else if (i.justPressed("cancel")) this.closeRoom();
     if (this.net.ready && !this.panelShown) { this.panelShown = true; showPanel({ link: this.net.link, app: this.app }); }
   }
   draw(ctx, view) {
     UI.menuBackground(ctx, view, this.app.t);
-    UI.title(ctx, view, "SALA ONLINE", 36);
     const lx = 40;
+    // título a la izquierda: a la derecha va el panel del link
+    UI.text(ctx, this.net.mode === "tournament" ? "SALA ONLINE: TORNEO" : "SALA ONLINE: 2 JUGADORES", lx, 36, { size: 30, color: COLORS.yellow, stroke: 6, align: "left" });
     if (this.net.error) {
       UI.text(ctx, this.net.error, view.w / 2, 120, { size: 18, color: COLORS.red });
     } else if (!this.net.ready) {
@@ -207,7 +213,7 @@ class HostLobbyScene {
       ctx.fill();
       if (sel) { ctx.strokeStyle = COLORS.yellow; ctx.lineWidth = 2; ctx.stroke(); }
       UI.text(ctx, it.label, lx + 150, y, { size: 21, color: it.ok ? (sel ? COLORS.yellow : "#fff") : "#666" });
-      UI.addHit({ x: lx, y: y - 20, w: 300, h: 40 }, () => { this.index = k; if (it.ok) it.act(); });
+      UI.addHit({ x: lx, y: y - 20, w: 300, h: 40 }, () => { this.index = k; if (it.ok) it.act(); else if (it.why) this.app.toast(it.why); });
     });
   }
 }

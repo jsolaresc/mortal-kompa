@@ -48,12 +48,37 @@ export function multiplayerMenu(app, index = 0) {
     title: "MULTIJUGADOR", index,
     onBack: () => mainMenu(app, 1),
     items: [
-      { label: "2 Jugadores (mismo equipo)", action: () => startVersusLocal(app) },
-      { label: "Torneo (mismo equipo)", action: () => app.setScene(new TournamentSizeScene(app, {
-        onDone: (n) => startLocalTournament(app, n), onBack: () => multiplayerMenu(app, 1),
-      })) },
-      { label: "Online: invitar por link", action: () => hostOnline(app) },
+      { label: "Local", action: () => localMenu(app) },
+      { label: "Online", action: () => onlineMenu(app) },
       { label: "Volver", action: () => mainMenu(app, 1) },
+    ],
+  }));
+}
+
+// mismo equipo (teclado / joysticks / un celular)
+export function localMenu(app, index = 0) {
+  app.setScene(new ListMenu(app, {
+    title: "LOCAL", index,
+    onBack: () => multiplayerMenu(app, 0),
+    items: [
+      { label: "2 Jugadores", action: () => startVersusLocal(app) },
+      { label: "Torneo", action: () => app.setScene(new TournamentSizeScene(app, {
+        onDone: (n) => startLocalTournament(app, n), onBack: () => localMenu(app, 1),
+      })) },
+      { label: "Volver", action: () => multiplayerMenu(app, 0) },
+    ],
+  }));
+}
+
+// por internet, invitando con un link
+export function onlineMenu(app, index = 0) {
+  app.setScene(new ListMenu(app, {
+    title: "ONLINE", index,
+    onBack: () => multiplayerMenu(app, 1),
+    items: [
+      { label: "2 Jugadores", action: () => hostOnline(app, "versus") },
+      { label: "Torneo", action: () => hostOnline(app, "tournament") },
+      { label: "Volver", action: () => multiplayerMenu(app, 1) },
     ],
   }));
 }
@@ -235,7 +260,7 @@ async function launchLocal(app, { slugs, mystery, stageDef, inputs, onChangeChar
 export function startVersusLocal(app) {
   app.setScene(new CharSelectScene(app, {
     players: [{ input: app.inputs[0] }, { input: app.inputs[1] }],
-    onBack: () => multiplayerMenu(app, 0),
+    onBack: () => localMenu(app, 0),
     onDone: (picks) => app.setScene(new StageSelectScene(app, {
       input: app.inputs[0],
       onBack: () => startVersusLocal(app),

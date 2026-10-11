@@ -232,8 +232,13 @@ export class CharSelectScene {
     if (this.subtitle) UI.text(ctx, this.subtitle, view.w / 2, 54, { size: 15, color: "#ddd" });
     UI.text(ctx, `${this.players[0].label || "J1"}: ${e1 ? e1.name : "Aleatorio"}`, 40, C.BASE_H / 2 + 240, { size: 20, color: P1_COLOR, align: "left", baseline: "top" });
 
-    if (this.app.isTouchDevice) UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.cancel(0), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
-    UI.footer(ctx, view, this.app.isTouchDevice ? "Tocá un luchador para verlo y otra vez para elegirlo" : "Puño o ENTER confirma · Patada o ESC vuelve (J1)", C.BASE_H - 25);
+    if (this.app.isTouchDevice) {
+      UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.cancel(0), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
+      // celular: tocar una cara la marca; ACEPTAR la elige
+      const p = this.players.findIndex((pl, k) => !pl.cpu && !this.confirmed[k]);
+      if (p >= 0) UI.pillButton(ctx, view.w / 2, C.BASE_H - 46, "ACEPTAR", () => this.confirm(p), { size: 20, h: 42, minW: 200 });
+      UI.footer(ctx, view, "Tocá un luchador y después ACEPTAR", C.BASE_H - 12);
+    } else UI.footer(ctx, view, "Puño o ENTER confirma · Patada o ESC vuelve (J1)", C.BASE_H - 25);
   }
 }
 
@@ -273,7 +278,7 @@ export class StageSelectScene {
     const cols = Math.min(n <= 6 ? 3 : 4, n);
     this._cols = cols;
     const rows = Math.ceil(n / cols);
-    const availH = C.BASE_H - 90 - 44;   // entre el título y el pie
+    const availH = C.BASE_H - 90 - (this.app.isTouchDevice ? 56 : 44);   // entre el título y el pie / botón
     const cw = Math.min(260, (view.w - 120) / cols - 20, ((availH / rows) - 46) * 16 / 9);
     const ch = cw * 9 / 16;
     const gw = cols * cw + (cols - 1) * 20;
@@ -295,6 +300,7 @@ export class StageSelectScene {
       UI.addHit({ x, y, w: cw, h: ch + 30 }, () => { if (this.index === i) this.choose(i); else this.index = i; });
     });
     UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.onBack(), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
-    UI.footer(ctx, view, "Confirmar elige · Patada/ESC vuelve");
+    if (this.app.isTouchDevice) UI.pillButton(ctx, view.w / 2, C.BASE_H - 24, "ACEPTAR", () => this.choose(this.index), { size: 20, h: 40, minW: 200 });
+    else UI.footer(ctx, view, "Confirmar elige · Patada/ESC vuelve");
   }
 }

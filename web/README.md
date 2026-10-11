@@ -16,10 +16,10 @@ Se juega desde una página web: PC (teclado o joystick), Android y iPhone
 - **Escenario secreto:** en la elección de escenario, START / ENTER.
 
 ## Online: invitar por link
-Multijugador → **Online: invitar por link**. Aparece el link para mandar por
-WhatsApp, mail o copiarlo. Quien lo abre (en cualquier celular o PC, no hace
-falta estar en la misma red) entra a la sala. El anfitrión elige **Pelea 1 vs 1**
-o **Torneo** (3 o más).
+Multijugador → **Online** → **2 Jugadores** o **Torneo**. Aparece el link para
+copiarlo o compartirlo (WhatsApp, mail...). Quien lo abre (en cualquier celular o PC, no hace
+falta estar en la misma red) entra a la sala y el anfitrión arranca cuando
+están todos (torneo: 3 o más).
 
 - El que invita corre la pelea; los demás le mandan sus botones y reciben lo que
   hay que dibujar, directo entre navegadores (WebRTC). Para "presentarlos" se usa
