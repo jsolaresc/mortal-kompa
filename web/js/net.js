@@ -12,6 +12,7 @@
 // y abrí el link de invitación en otra pestaña del mismo navegador.
 // =====================================================================
 import { ICE_SERVERS, GAME_VERSION } from "./config.js";
+import { IS_APP, PUBLIC_URL } from "./platform.js";
 
 const ID_PREFIX = "mortalkompa-";
 const LOCAL = new URLSearchParams(location.search).get("net") === "local";
@@ -24,7 +25,7 @@ export function newRoomCode() {
 }
 
 export function inviteLink(code) {
-  const u = new URL(location.href);
+  const u = new URL(IS_APP ? PUBLIC_URL : location.href);
   u.search = "";
   u.hash = "";
   u.searchParams.set("sala", code);

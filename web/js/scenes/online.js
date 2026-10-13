@@ -21,6 +21,7 @@ import { CharSelectScene, StageSelectScene } from "./select.js";
 import { TournamentBracket, drawBracket, TournamentVictory } from "./tournament.js";
 import { openHost, openGuest, newRoomCode, inviteLink } from "../net.js";
 import { playMenuMusic } from "./menus.js";
+import { BRIDGE, roomFromText } from "../platform.js";
 import * as Flow from "../flow.js";
 
 // ---------------------------------------------------------------------
@@ -45,17 +46,46 @@ function showPanel({ link = null, app }) {
   input.value = link;
   const msg = `¡Te desafío a una pelea en Mortal Kompa! Entrá acá: ${link}`;
   document.getElementById("share-copy").onclick = async () => {
+    if (BRIDGE) { BRIDGE.copy(link); app.toast("¡Link copiado!"); return; }
     try { await navigator.clipboard.writeText(link); app.toast("¡Link copiado!"); }
     catch (e) { input.select(); document.execCommand && document.execCommand("copy"); app.toast("Link copiado"); }
   };
   // "Compartir": menú nativo del celular (WhatsApp, mail, etc.); en la PC,
   // donde casi nunca existe, abre WhatsApp con el mensaje armado
   document.getElementById("share-native").onclick = () => {
-    if (navigator.share) navigator.share({ title: "Mortal Kompa", text: msg, url: link }).catch(() => {});
+    if (BRIDGE) BRIDGE.share(msg);
+    else if (navigator.share) navigator.share({ title: "Mortal Kompa", text: msg, url: link }).catch(() => {});
     else window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
   };
 }
 function hidePanel() { panel().classList.add("hidden"); }
+
+// "Unirse con un link": se pega el link (o el código) que mandó el anfitrión
+export function showJoinPanel(app, onBack) {
+  const p = document.getElementById("join");
+  const input = document.getElementById("join-link");
+  p.classList.remove("hidden");
+  input.value = "";
+  const close = () => { p.classList.add("hidden"); };
+  document.getElementById("join-go").onclick = () => {
+    const room = roomFromText(input.value);
+    if (!room) { app.toast("Pegá el link que te mandaron"); return; }
+    close();
+    joinOnlineScene(app, room);
+  };
+  document.getElementById("join-paste").onclick = async () => {
+    try {
+      const t = BRIDGE ? BRIDGE.paste() : await navigator.clipboard.readText();
+      if (t) input.value = t;
+    } catch (e) { app.toast("Mantené apretado el casillero y elegí Pegar"); }
+  };
+  document.getElementById("join-cancel").onclick = () => { close(); onBack(); };
+  app.setScene({
+    draw(ctx, view) { UI.menuBackground(ctx, view, app.t); UI.title(ctx, view, "UNIRSE CON UN LINK", 50); },
+    update() { if (app.anyInput.justPressed("cancel")) { close(); onBack(); } },
+    exit() { close(); },
+  });
+}
 
 function myName(app, fallback) { return (app.settings.playerName || "").trim() || fallback; }
 
@@ -263,7 +293,7 @@ function host1v1(app, keepStage = null) {
       input: app.inputs[0],
       onBack: () => backToLobby(app),
       onDone: (stageDef) => netFight(app, {
-        slugs: [myPick.slug, rival.pick.slug], mystery: [myPick.random, rival.pick.random], owners: [0, rival.id],
+        slugs: [myPick.slug, rival.pick.slug], mystery: [false, false], owners: [0, rival.id],
         stageDef, kind: "versus",
       }),
     }));

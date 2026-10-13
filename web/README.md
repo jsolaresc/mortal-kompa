@@ -15,11 +15,19 @@ Se juega desde una página web: PC (teclado o joystick), Android y iPhone
   pantalla de inicio* y abrirlo desde ese ícono.
 - **Escenario secreto:** en la elección de escenario, START / ENTER.
 
+## Instalar
+En el menú principal, desde el celular, aparece **INSTALAR**:
+- **Android:** baja el APK (la app es este mismo juego, en pantalla completa).
+- **iPhone:** explica cómo agregar el ícono (Safari > Compartir > Agregar a
+  pantalla de inicio). Safari no deja que una página lo haga sola.
+
 ## Online: invitar por link
 Multijugador → **Online** → **2 Jugadores** o **Torneo**. Aparece el link para
 copiarlo o compartirlo (WhatsApp, mail...). Quien lo abre (en cualquier celular o PC, no hace
 falta estar en la misma red) entra a la sala y el anfitrión arranca cuando
-están todos (torneo: 3 o más).
+están todos (torneo: 3 o más). También se puede entrar con
+**Online > Unirse con un link** (pegando el link): útil desde la app de Android.
+La app y el navegador juegan juntos.
 
 - El que invita corre la pelea; los demás le mandan sus botones y reciben lo que
   hay que dibujar, directo entre navegadores (WebRTC). Para "presentarlos" se usa

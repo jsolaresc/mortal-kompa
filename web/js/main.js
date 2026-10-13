@@ -250,5 +250,16 @@ async function boot() {
 }
 
 window.__app = app; // para pruebas desde la consola
+
+// App Android: el botón "atrás" del celular hace de ESC; en la pantalla de
+// inicio / menú principal cierra la app.
+window.__androidBack = () => {
+  const sc = app.scene;
+  const atRoot = sc && (sc.constructor.name === "TitleScene" || (sc.constructor.name === "ListMenu" && !sc.onBack));
+  if (atRoot && window.MKAndroid) { window.MKAndroid.exit(); return; }
+  for (const type of ["keydown", "keyup"]) {
+    window.dispatchEvent(new KeyboardEvent(type, { key: "Escape", code: "Escape", bubbles: true }));
+  }
+};
 keyboard.listeners.push(() => audio.unlock());
 boot();

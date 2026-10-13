@@ -15,7 +15,7 @@ import { ListMenu, DifficultyScene, OptionsScene, TournamentSizeScene, playMenuM
 import { CharSelectScene, StageSelectScene } from "./scenes/select.js";
 import { startTower } from "./scenes/tower.js";
 import { startLocalTournament } from "./scenes/tournament.js";
-import { hostOnline, joinOnlineScene } from "./scenes/online.js";
+import { hostOnline, joinOnlineScene, showJoinPanel } from "./scenes/online.js";
 
 // ---------------------------------------------------------------------
 // Menús
@@ -78,6 +78,7 @@ export function onlineMenu(app, index = 0) {
     items: [
       { label: "2 Jugadores", action: () => hostOnline(app, "versus") },
       { label: "Torneo", action: () => hostOnline(app, "tournament") },
+      { label: "Unirse con un link", action: () => showJoinPanel(app, () => onlineMenu(app, 2)) },
       { label: "Volver", action: () => multiplayerMenu(app, 1) },
     ],
   }));
@@ -265,7 +266,7 @@ export function startVersusLocal(app) {
       input: app.inputs[0],
       onBack: () => startVersusLocal(app),
       onDone: (stageDef) => launchLocal(app, {
-        slugs: picks.map((p) => p.slug), mystery: picks.map((p) => p.random), stageDef,
+        slugs: picks.map((p) => p.slug), mystery: [false, false], stageDef,
         inputs: [app.inputs[0], app.inputs[1]], onChangeChars: () => startVersusLocal(app),
       }),
     })),
@@ -280,7 +281,7 @@ export function startCpuFight(app, level) {
       input: app.inputs[0],
       onBack: () => startCpuFight(app, level),
       onDone: (stageDef) => launchLocal(app, {
-        slugs: picks.map((p) => p.slug), mystery: picks.map((p) => p.random), stageDef,
+        slugs: picks.map((p) => p.slug), mystery: [false, false], stageDef,
         inputs: [app.inputs[0], new CPUInput(level)], onChangeChars: () => startCpuFight(app, level),
       }),
     })),

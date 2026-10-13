@@ -1,0 +1,53 @@
+plugins {
+    id "com.android.application"
+}
+
+// versión: la pone el workflow (-PvcBuild=N). Arranca en 200000000 para
+// quedar por encima de todos los APK anteriores (motor Python) y que se
+// instale encima sin desinstalar.
+def vcBuild = (project.findProperty("vcBuild") ?: "0").toInteger()
+
+android {
+    namespace "ar.joaquin.mortalkompa"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ar.joaquin.mortalkompa"
+        minSdk 24
+        targetSdk 34
+        versionCode 200000000 + vcBuild
+        versionName "2.0.${vcBuild}"
+    }
+
+    signingConfigs {
+        // MISMA llave que los APK anteriores (build_android/debug.keystore):
+        // así Android acepta la actualización encima de la app instalada
+        mk {
+            storeFile file("../../build_android/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.mk
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // los assets del juego ya vienen comprimidos (png/mp3/mp4)
+    androidResources {
+        noCompress += ["png", "jpg", "mp3", "mp4", "wav", "ttf"]
+    }
+}
+
+dependencies {
+    implementation "androidx.webkit:webkit:1.11.0"
+}

@@ -8,6 +8,7 @@ import { audio } from "../audio.js";
 import { DB } from "../assets.js";
 import { ok, DEFAULT_KEYS, prettyKey, keyboard, keyLabel, PAD_LABELS, gamepads } from "../input.js";
 import * as Flow from "../flow.js";
+import { canOfferInstall, IS_IOS, APK_URL } from "../platform.js";
 
 // Como en la versión de PC: los temas de menú NO se repiten en loop;
 // cuando termina uno arranca otro al azar (distinto del anterior).
@@ -85,8 +86,17 @@ export class ListMenu {
       { disabled: this.items.map((i) => i.disabled) });
     if (this.onBack) UI.pillButton(ctx, 80, 36, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
     fullscreenButton(this.app, ctx, view);
+    if (this.showLogo) installButton(this.app, ctx, view);
     UI.footer(ctx, view, this.footerText ?? footerHelp(this.app, !!this.onBack));
   }
+}
+
+export function installButton(app, ctx, view) {
+  if (!canOfferInstall()) return;
+  UI.pillButton(ctx, view.w - 110, 76, "⬇ INSTALAR", () => {
+    if (IS_IOS) document.getElementById("install-ios").classList.remove("hidden");
+    else window.location.href = APK_URL;   // Android: baja el APK
+  }, { size: 13, h: 32, minW: 190, color: "#3ca05a" });
 }
 
 export function fullscreenButton(app, ctx, view) {

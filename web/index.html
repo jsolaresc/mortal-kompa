@@ -34,6 +34,27 @@
       </div>
     </div>
   </div>
+
+  <div id="join" class="hidden">
+    <div class="label">Pegá el link que te mandaron</div>
+    <input id="join-link" placeholder="https://...?sala=..." autocomplete="off" autocapitalize="off">
+    <div class="buttons">
+      <button id="join-paste" type="button" class="secondary">Pegar</button>
+      <button id="join-go" type="button">Unirse</button>
+    </div>
+    <div class="buttons"><button id="join-cancel" type="button" class="secondary">Volver</button></div>
+  </div>
+
+  <div id="install-ios" class="hidden">
+    <div class="title">Instalar en iPhone</div>
+    <ol>
+      <li>Abrí esta página en <b>Safari</b>.</li>
+      <li>Tocá <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li>
+      <li>Elegí <b>Agregar a pantalla de inicio</b>.</li>
+    </ol>
+    <div>Queda el ícono de Mortal Kompa: abrilo desde ahí y se juega en pantalla completa.</div>
+    <div class="buttons"><button type="button" onclick="document.getElementById('install-ios').classList.add('hidden')">Entendido</button></div>
+  </div>
   </div>
 
   <script src="lib/peerjs.min.js"></script>

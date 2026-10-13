@@ -1,18 +1,19 @@
-# Mortal Kompa — Android y navegador
+# Mortal Kompa — navegador y Android
 
-Este repo tiene dos versiones de Mortal Kompa (V.1.3):
+**Un solo juego para todo:** la carpeta `web/` es Mortal Kompa en JavaScript.
+- **Navegador** (PC, Android, iPhone): https://jsolaresc.github.io/mortal-kompa/
+- **App Android (APK):** es ese mismo juego adentro de una app (`android_app/`),
+  en pantalla completa y con todos los archivos incluidos. Cada cambio en `web/`
+  compila un APK nuevo solo (pestaña **Actions**) y lo publica en **Releases**.
+- La app y la página juegan **online entre sí** (link de invitación).
 
-- **APK para Android** (código Python, raíz del repo). Cada cambio subido a
-  `main` compila el APK solo (pestaña **Actions**) y lo publica en **Releases**.
-- **Navegador** (carpeta `web/`, JavaScript). Se juega desde una página, en PC,
-  Android o iPhone, con multijugador **online por link**. Se publica sola en
-  GitHub Pages: https://jsolaresc.github.io/mortal-kompa/ (ver `web/README.md`).
-
-Ninguna de las dos toca la versión instalable de PC (la de escenarios en video).
+La versión instalable de PC (Python, escenarios en video) no se toca desde acá.
+El código Python de la app vieja queda en el repo como referencia
+(`main.py`, `engine/`, `buildozer.spec`); ya no se compila.
 
 ## Instalar en un celular
-1. En el celular, entrá a este repo (logueado en GitHub) → **Releases** → el
-   último "Mortal Kompa Android (build N)" → tocá el `.apk`.
+1. Desde el celular, en la página del juego: menú principal → **INSTALAR** (baja
+   el APK). O en este repo → **Releases** → `MortalKompa.apk`.
 2. Abrilo y aceptá "instalar apps de origen desconocido" si lo pide.
 3. La primera vez que se abre tarda unos segundos más (descomprime los
    personajes y la música).

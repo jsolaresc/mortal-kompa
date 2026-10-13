@@ -205,7 +205,6 @@ class TowerVictory {
     UI.drawImageContain(ctx, me.pose, view.w / 2 - 140, 130, 280, C.BASE_H - 170);
     this.confetti.draw(ctx);
     UI.title(ctx, view, "¡COMPLETASTE LA TORRE DE BATALLA!", 60, COLORS.yellow, 34);
-    UI.text(ctx, `${me.name} le ganó a los ${this.tower.opps.length} rivales (el jefe era ${this.bossReal})`, view.w / 2, 100, { size: 18 });
     UI.pillButton(ctx, view.w / 2, C.BASE_H - 30, "CONTINUAR", () => Flow.mainMenu(this.app), { size: 16, h: 36 });
   }
 }

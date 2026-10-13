@@ -1,23 +1,19 @@
-# Compila el APK de Mortal Kompa para Android en los servidores de GitHub.
-# Corre solo con cada push a "main" (o a mano desde la pestaña Actions >
-# "Build APK" > "Run workflow"). Al terminar, el APK queda:
-#   - en Releases (para bajarlo directo desde el celular), y
-#   - como "artifact" del run (zip con el APK adentro).
-# El primer build tarda ~30-40 min (descarga el SDK/NDK de Android y compila
-# Python + pygame); los siguientes, ~10 min gracias a la caché.
+# Compila el APK de Mortal Kompa: es el MISMO juego que la versión de
+# navegador (carpeta web/) adentro de una app Android (android_app/).
+# Corre con cada cambio en web/ o android_app/ (o a mano desde Actions), así
+# la app queda siempre igual que la página. El APK queda en Releases:
+#   - MortalKompa-2.0.N.apk  (con número de versión)
+#   - MortalKompa.apk         (nombre fijo: es el que baja el botón "INSTALAR")
 name: Build APK
 
 on:
   push:
     branches: [main]
-    # la versión de navegador (web/) se publica aparte (ver pages.yml)
-    paths-ignore:
+    paths:
       - "web/**"
-      - "tools/build_web.py"
-      - ".github/workflows/pages.yml"
-      - "README.md"
-      - "index.html"
-      - ".nojekyll"
+      - "android_app/**"
+      - "build_android/debug.keystore"
+      - ".github/workflows/build-apk.yml"
   workflow_dispatch:
 
 permissions:
@@ -25,93 +21,66 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Dependencias del sistema
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git zip unzip autoconf automake libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev \
-            build-essential ccache
-
-      - name: Buildozer
-        run: |
-          python -m pip install --upgrade pip
-          pip install "buildozer==1.5.0" "Cython==0.29.33" virtualenv setuptools
-
-      - name: Caché de Buildozer (SDK/NDK y librerías ya compiladas)
-        uses: actions/cache@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.buildozer
-            .buildozer
-          key: buildozer-${{ runner.os }}-v2-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            buildozer-${{ runner.os }}-v2-
+          gradle-version: "8.7"
 
-      - name: Llave de firma fija (para poder actualizar el juego sin desinstalarlo)
+      - name: Copiar el juego adentro de la app
         run: |
-          mkdir -p ~/.android
-          cp build_android/debug.keystore ~/.android/debug.keystore
-
-      - name: Más memoria para Gradle (los assets del juego son pesados)
-        run: |
-          mkdir -p ~/.gradle
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8" > ~/.gradle/gradle.properties
-
-      - name: Número de versión
-        run: sed -i "s/^version = .*/version = 1.3.${{ github.run_number }}/" buildozer.spec
+          rm -rf android_app/app/src/main/assets
+          mkdir -p android_app/app/src/main/assets
+          cp -r web android_app/app/src/main/assets/web
+          rm -f android_app/app/src/main/assets/web/README.md "android_app/app/src/main/assets/web/Jugar en mi PC.bat"
+          du -sh android_app/app/src/main/assets/web
 
       - name: Compilar APK
-        run: yes | buildozer -v android debug 2>&1 | tee build.log; test ${PIPESTATUS[1]} -eq 0
+        working-directory: android_app
+        run: |
+          set -o pipefail
+          gradle --no-daemon assembleRelease -PvcBuild=${{ github.run_number }} 2>&1 | tee ../build.log
 
       - name: Renombrar APK
         run: |
           mkdir -p out
-          cp bin/*.apk "out/MortalKompa-1.3.${{ github.run_number }}.apk"
+          cp android_app/app/build/outputs/apk/release/app-release.apk "out/MortalKompa-2.0.${{ github.run_number }}.apk"
+          cp android_app/app/build/outputs/apk/release/app-release.apk out/MortalKompa.apk
           ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
           name: MortalKompa-apk
-          path: out/*.apk
+          path: out/MortalKompa-2.0.${{ github.run_number }}.apk
 
       - name: Publicar en Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Mortal Kompa Android (build ${{ github.run_number }})
-          body: "Instalar en el celular: bajar el .apk y abrirlo (permitir instalar apps de origen desconocido)."
-          files: out/*.apk
-
-      - name: Log del build (si falló)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+          tag_name: app-${{ github.run_number }}
+          name: Mortal Kompa Android 2.0.${{ github.run_number }}
+          make_latest: true
+          body: "Instalar en el celular: bajar MortalKompa.apk y abrirlo (permitir instalar apps de origen desconocido). Se instala encima de la versión anterior."
+          files: |
+            out/MortalKompa-2.0.${{ github.run_number }}.apk
+            out/MortalKompa.apk
 
       - name: Subir final del log a la rama build-logs (si falló)
         if: failure()
         run: |
-          tail -n 600 build.log > /tmp/build-tail.log || true
+          tail -n 300 build.log > /tmp/build-tail.log || true
           git config user.name "build-bot"
           git config user.email "build-bot@users.noreply.github.com"
           git checkout --orphan build-logs
           git rm -rf --cached . > /dev/null
           cp /tmp/build-tail.log build-tail.log
           git add build-tail.log
-          git commit -m "log run ${{ github.run_number }}"
+          git commit -m "log app ${{ github.run_number }}"
           git push -f origin build-logs
