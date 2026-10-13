@@ -21,8 +21,8 @@ jobs:
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
           echo "build-tools: $BT" > verify.txt
           for t in ${{ github.event.inputs.tags }}; do
-            gh release download "$t" -p "*.apk" -D "apk_$t"
-            f=$(ls apk_$t/*.apk)
+            gh release download "$t" -p "MortalKompa*.apk" -D "apk_$t"
+            f=$(ls apk_$t/*.apk | head -1)
             {
               echo; echo "################ $t  $f"
               echo "--- apksigner verify"; $BT/apksigner verify --verbose --print-certs "$f" 2>&1 | head -40
