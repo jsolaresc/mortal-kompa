@@ -20,15 +20,18 @@ export const APK_URL = "https://github.com/jsolaresc/mortal-kompa/releases/lates
 const UA = typeof navigator !== "undefined" ? navigator.userAgent : "";
 export const IS_ANDROID = /Android/i.test(UA);
 export const IS_IOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1);
-export const IS_STANDALONE = typeof window !== "undefined" &&
-  ((window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
-   (window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches) || navigator.standalone === true);
+export function isStandalone() {
+  try {
+    return navigator.standalone === true ||
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches && !document.fullscreenElement);
+  } catch (e) { return false; }
+}
 
 // ¿Mostrar el botón "INSTALAR"? Solo en el navegador de Android (baja el
 // APK) o de iPhone (explica cómo agregar el ícono).
-export function canOfferInstall() {
-  if (IS_APP || IS_STANDALONE) return false;
-  return IS_ANDROID || IS_IOS;
+export function canOfferInstall(isTouch = false) {
+  if (IS_APP || isStandalone()) return false;
+  return IS_ANDROID || IS_IOS || isTouch;   // celular con navegador "modo PC": por las dudas, igual
 }
 
 // Saca el código de sala de un link de invitación (o de un código suelto)

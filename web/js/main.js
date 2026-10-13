@@ -8,7 +8,7 @@ import { PlayerInput, CombinedInput, pollGamepads, endKeyboardFrame, gamepads, k
 import { TouchControls, IS_TOUCH_DEVICE } from "./touch.js";
 import * as UI from "./ui.js";
 import { loadSettings, saveSettings } from "./settings.js";
-import { TitleScene, tickMenuVoices } from "./scenes/menus.js";
+import { tickMenuVoices } from "./scenes/menus.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -245,7 +245,12 @@ async function boot() {
     console.error(e);
     return;
   }
-  app.setScene(new TitleScene(app));
+  // directo al menú principal (o a la sala, si se entró con un link de
+  // invitación). El sonido se habilita con el primer toque/tecla (los
+  // navegadores no dejan antes): ver audio.unlock().
+  const Flow = await import("./flow.js");
+  if (app.inviteRoom) Flow.joinOnline(app, app.inviteRoom);
+  else Flow.mainMenu(app);
   requestAnimationFrame(frame);
 }
 
@@ -255,7 +260,7 @@ window.__app = app; // para pruebas desde la consola
 // inicio / menú principal cierra la app.
 window.__androidBack = () => {
   const sc = app.scene;
-  const atRoot = sc && (sc.constructor.name === "TitleScene" || (sc.constructor.name === "ListMenu" && !sc.onBack));
+  const atRoot = sc && sc.constructor.name === "ListMenu" && !sc.onBack;
   if (atRoot && window.MKAndroid) { window.MKAndroid.exit(); return; }
   for (const type of ["keydown", "keyup"]) {
     window.dispatchEvent(new KeyboardEvent(type, { key: "Escape", code: "Escape", bubbles: true }));

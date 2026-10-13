@@ -2,7 +2,7 @@
 const KEY = "mkp_settings_v1";
 
 export const DEFAULTS = {
-  volumes: { music: 0.5, sfx: 0.9, announcer: 1.0 },
+  volumes: { music: 0.5, stage: 0.5, sfx: 0.9, announcer: 1.0 },
   touchControls: "auto",   // auto | on | off
   touchScale: 100,         // % del tamaño de los botones táctiles
   keys: null,              // null = teclas por defecto (ver input.js DEFAULT_KEYS)

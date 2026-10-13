@@ -38,7 +38,6 @@ export function onePlayerMenu(app, index = 0) {
     items: [
       { label: "Torre de Batalla", action: () => askDifficulty(app, "DIFICULTAD INICIAL DE LA TORRE", (lvl) => startTower(app, lvl), () => onePlayerMenu(app, 0)) },
       { label: "Pelea contra CPU", action: () => askDifficulty(app, "DIFICULTAD DE LA CPU", (lvl) => startCpuFight(app, lvl), () => onePlayerMenu(app, 1)) },
-      { label: "Volver", action: () => mainMenu(app, 0) },
     ],
   }));
 }
@@ -50,7 +49,6 @@ export function multiplayerMenu(app, index = 0) {
     items: [
       { label: "Local", action: () => localMenu(app) },
       { label: "Online", action: () => onlineMenu(app) },
-      { label: "Volver", action: () => mainMenu(app, 1) },
     ],
   }));
 }
@@ -65,7 +63,6 @@ export function localMenu(app, index = 0) {
       { label: "Torneo", action: () => app.setScene(new TournamentSizeScene(app, {
         onDone: (n) => startLocalTournament(app, n), onBack: () => localMenu(app, 1),
       })) },
-      { label: "Volver", action: () => multiplayerMenu(app, 0) },
     ],
   }));
 }
@@ -79,7 +76,6 @@ export function onlineMenu(app, index = 0) {
       { label: "2 Jugadores", action: () => hostOnline(app, "versus") },
       { label: "Torneo", action: () => hostOnline(app, "tournament") },
       { label: "Unirse con un link", action: () => showJoinPanel(app, () => onlineMenu(app, 2)) },
-      { label: "Volver", action: () => multiplayerMenu(app, 1) },
     ],
   }));
 }
@@ -110,7 +106,7 @@ export async function prepareFight(app, slugs, stageDef) {
 }
 
 export function playStageMusic(stage) {
-  if (stage && stage.music) { audio.playMusic(stage.music, { loop: true, volume: 0.5 }); audio.musicCategory = "stage"; }
+  if (stage && stage.music) audio.playMusic(stage.music, { loop: true, volume: 0.5, category: "stage" });
   else if (DB.menuMusic.length && !audio.isMusicPlaying()) playMenuMusic();
 }
 

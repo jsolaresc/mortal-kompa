@@ -92,7 +92,7 @@ export class ListMenu {
 }
 
 export function installButton(app, ctx, view) {
-  if (!canOfferInstall()) return;
+  if (!canOfferInstall(app.isTouchDevice)) return;
   UI.pillButton(ctx, view.w - 110, 76, "⬇ INSTALAR", () => {
     if (IS_IOS) document.getElementById("install-ios").classList.remove("hidden");
     else window.location.href = APK_URL;   // Android: baja el APK
@@ -203,72 +203,125 @@ export class TournamentSizeScene {
 // ---------------------------------------------------------------------
 // Opciones
 // ---------------------------------------------------------------------
-export class OptionsScene {
-  constructor(app, { onBack }) {
-    this.app = app; this.onBack = onBack; this.index = 0;
-  }
-  rows() {
-    const s = this.app.settings;
-    const pct = (v) => `${Math.round(v * 10)}`;
-    const touchL = { auto: "Automático", on: "Siempre", off: "Nunca" };
-    return [
-      { label: `Música: ${pct(s.volumes.music)}`, adj: (d) => { s.volumes.music = clamp01(s.volumes.music + d * 0.1); } },
-      { label: `Efectos: ${pct(s.volumes.sfx)}`, adj: (d) => { s.volumes.sfx = clamp01(s.volumes.sfx + d * 0.1); audio.playSfx("hit_impact", 1); } },
-      { label: `Locutor: ${pct(s.volumes.announcer)}`, adj: (d) => { s.volumes.announcer = clamp01(s.volumes.announcer + d * 0.1); audio.playAnnouncer("fight"); } },
-      { label: `Pantalla completa: ${document.fullscreenElement ? "Sí" : "No"}`, act: () => this.app.toggleFullscreen() },
-      { label: `Controles táctiles: ${touchL[s.touchControls || "auto"]}`, adj: (d) => {
-        const order = ["auto", "on", "off"];
-        s.touchControls = order[(order.indexOf(s.touchControls || "auto") + (d > 0 ? 1 : 2)) % 3];
-      } },
-      { label: `Tamaño botones táctiles: ${s.touchScale || 100}%`, adj: (d) => {
-        s.touchScale = Math.max(70, Math.min(140, (s.touchScale || 100) + d * 10));
-        this.app.relayout();
-      } },
-      { label: "Controles (teclado / joystick)", act: () => this.app.setScene(new ControlsScene(this.app, { onBack: () => this.app.setScene(this) })) },
-      { label: "Volver", act: () => this.back() },
-    ];
-  }
+// ---------------------------------------------------------------------
+// Opciones (como en la versión de PC): Sonido > ... · Pantalla completa
+// (se cambia acá mismo) · Controles > ...
+// Lista genérica de filas: { label, adj(d) | act(), disabled }
+// ---------------------------------------------------------------------
+class RowsScene {
+  constructor(app, { title, onBack }) { this.app = app; this.title = title; this.onBack = onBack; this.index = 0; }
+  rows() { return []; }
   back() { this.app.saveSettings(); this.onBack(); }
+  move(rows, d) {
+    const n = rows.length;
+    for (let k = 1; k <= n; k++) {
+      const j = (((this.index + d * k) % n) + n) % n;
+      if (!rows[j].disabled) { this.index = j; return; }
+    }
+  }
+  run(r, d = 1) {
+    if (!r || r.disabled) return;
+    if (r.act) r.act(); else if (r.adj) { r.adj(d); this.app.saveSettings(); }
+  }
   update() {
     const i = this.app.anyInput;
     const rows = this.rows();
-    if (i.justPressed("up")) this.index = (this.index - 1 + rows.length) % rows.length;
-    else if (i.justPressed("down")) this.index = (this.index + 1) % rows.length;
-    else if (i.justPressed("left") && rows[this.index].adj) { rows[this.index].adj(-1); this.app.saveSettings(); }
-    else if (i.justPressed("right") && rows[this.index].adj) { rows[this.index].adj(1); this.app.saveSettings(); }
-    else if (ok(i)) { const r = rows[this.index]; if (r.act) r.act(); else if (r.adj) { r.adj(1); this.app.saveSettings(); } }
+    if (rows[this.index] && rows[this.index].disabled) this.move(rows, 1);
+    if (i.justPressed("up")) this.move(rows, -1);
+    else if (i.justPressed("down")) this.move(rows, 1);
+    else if (i.justPressed("left") && rows[this.index].adj) this.run(rows[this.index], -1);
+    else if (i.justPressed("right") && rows[this.index].adj) this.run(rows[this.index], 1);
+    else if (ok(i)) this.run(rows[this.index], 1);
     else if (i.justPressed("cancel")) this.back();
   }
   draw(ctx, view) {
     UI.menuBackground(ctx, view, this.app.t);
-    UI.title(ctx, view, "OPCIONES", 50);
+    UI.title(ctx, view, this.title, 70);
     const rows = this.rows();
     const touch = UI.menuOpts.touch;
-    const gap = touch ? 52 : 48, top = touch ? 102 : 110;
+    const gap = touch ? 62 : 52;
+    const top = 280 - ((rows.length - 1) * gap) / 2;
     rows.forEach((r, k) => {
       const y = top + k * gap;
-      const sel = k === this.index;
+      const sel = k === this.index && !r.disabled;
+      const col = r.disabled ? "#666" : sel ? COLORS.yellow : COLORS.white;
       if (touch) {
-        UI.roundRect(ctx, view.w / 2 - 210, y - 21, 420, 42, 21);
+        UI.roundRect(ctx, view.w / 2 - 210, y - 23, 420, 46, 23);
         ctx.fillStyle = "rgba(0,0,0,0.62)"; ctx.fill();
-        ctx.strokeStyle = sel ? COLORS.yellow : "rgba(255,255,255,0.38)"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = sel ? COLORS.yellow : r.disabled ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.38)"; ctx.lineWidth = 2; ctx.stroke();
       } else if (sel) {
-        UI.roundRect(ctx, view.w / 2 - 260, y - 20, 520, 40, 10);
+        UI.roundRect(ctx, view.w / 2 - 260, y - 22, 520, 44, 10);
         ctx.fillStyle = "rgba(240,200,40,0.14)"; ctx.fill();
         ctx.strokeStyle = COLORS.yellow; ctx.lineWidth = 2; ctx.stroke();
       }
-      UI.text(ctx, r.label, view.w / 2, y, { size: touch ? 21 : 22, color: sel ? COLORS.yellow : COLORS.white });
+      UI.text(ctx, r.label, view.w / 2, y, { size: touch ? 22 : 24, color: col });
       UI.addHit({ x: view.w / 2 - 210, y: y - gap / 2, w: 420, h: gap }, () => {
+        if (r.disabled) return;
         this.index = k;
-        if (r.act) r.act(); else if (r.adj) { r.adj(1); this.app.saveSettings(); }
+        this.run(r, 1);
       });
       if (r.adj) {
-        const br = touch ? 20 : 16, bx = touch ? 238 : 230;
-        UI.roundButton(ctx, view.w / 2 - bx, y, br, "−", () => { this.index = k; r.adj(-1); this.app.saveSettings(); });
-        UI.roundButton(ctx, view.w / 2 + bx, y, br, "+", () => { this.index = k; r.adj(1); this.app.saveSettings(); });
+        const br = touch ? 21 : 16, bx = touch ? 240 : 232;
+        if (!r.disabled) {
+          UI.roundButton(ctx, view.w / 2 - bx, y, br, "−", () => { this.index = k; this.run(r, -1); });
+          UI.roundButton(ctx, view.w / 2 + bx, y, br, "+", () => { this.index = k; this.run(r, 1); });
+        }
       }
     });
-    UI.footer(ctx, view, "▲▼ elegir   ·   ◄ ► ajustar   ·   volver para guardar");
+    UI.pillButton(ctx, 80, 36, "◄ VOLVER", () => this.back(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+    if (!touch) UI.footer(ctx, view, "▲▼ elegir   ·   ◄ ► ajustar   ·   ESC volver");
+  }
+}
+
+const pct = (v) => `${Math.round((v ?? 0) * 100)}%`;
+
+export class OptionsScene extends RowsScene {
+  constructor(app, { onBack }) { super(app, { title: "OPCIONES", onBack }); }
+  rows() {
+    return [
+      { label: "Sonido", act: () => this.app.setScene(new SoundOptionsScene(this.app, { onBack: () => this.app.setScene(this) })) },
+      { label: `Pantalla completa: ${document.fullscreenElement ? "Sí" : "No"}`, act: () => this.app.toggleFullscreen(),
+        disabled: !document.fullscreenEnabled && !document.fullscreenElement },
+      { label: "Controles", act: () => this.app.setScene(new ControlOptionsScene(this.app, { onBack: () => this.app.setScene(this) })) },
+    ];
+  }
+}
+
+class SoundOptionsScene extends RowsScene {
+  constructor(app, { onBack }) { super(app, { title: "SONIDO", onBack }); }
+  rows() {
+    const v = this.app.settings.volumes;
+    const step = (k, d) => { v[k] = clamp01(v[k] + d * 0.1); audio.setVolumes(v); };
+    return [
+      { label: `Música: ${pct(v.music)}`, adj: (d) => step("music", d) },
+      { label: `Efectos: ${pct(v.sfx)}`, adj: (d) => { step("sfx", d); audio.playSfx("hit_impact", 1); } },
+      { label: `Escenario: ${pct(v.stage)}`, adj: (d) => step("stage", d) },
+      { label: `Locutor: ${pct(v.announcer)}`, adj: (d) => { step("announcer", d); audio.playAnnouncer("fight"); } },
+    ];
+  }
+}
+
+class ControlOptionsScene extends RowsScene {
+  constructor(app, { onBack }) { super(app, { title: "CONTROLES", onBack }); }
+  rows() {
+    const s = this.app.settings;
+    const touchL = { auto: "Automático", on: "Siempre", off: "Nunca" };
+    const touchOff = (s.touchControls || "auto") === "off";
+    // teclado/joystick: hace falta algo conectado (en la PC siempre hay teclado)
+    const hasPads = gamepads.list.length > 0;
+    const kbdOk = !this.app.isTouchDevice || hasPads || !!keyboard.lastUsed;
+    return [
+      { label: `Botones táctiles: ${touchL[s.touchControls || "auto"]}`, adj: (d) => {
+        const order = ["auto", "on", "off"];
+        s.touchControls = order[(order.indexOf(s.touchControls || "auto") + (d > 0 ? 1 : 2)) % 3];
+      } },
+      { label: `Tamaño botones táctiles: ${s.touchScale || 100}%`, disabled: touchOff, adj: (d) => {
+        s.touchScale = Math.max(70, Math.min(140, (s.touchScale || 100) + d * 10));
+        this.app.relayout();
+      } },
+      { label: "Teclado / Joystick", disabled: !kbdOk,
+        act: () => this.app.setScene(new ControlsScene(this.app, { onBack: () => this.app.setScene(this) })) },
+    ];
   }
 }
 function clamp01(v) { return Math.max(0, Math.min(1, Math.round(v * 10) / 10)); }
