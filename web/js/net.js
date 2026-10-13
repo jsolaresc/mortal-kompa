@@ -103,7 +103,8 @@ class LocalHub {
 // ---------------------------------------------------------------------
 // Anfitrión: abre la "sala" y acepta conexiones
 // ---------------------------------------------------------------------
-export function openHost(code, { onReady, onConnection, onError }) {
+const SIGNAL_ERRORS = new Set(["network", "server-error", "socket-error", "socket-closed", "disconnected"]);
+export function openHost(code, { onReady, onConnection, onError, onSignal }) {
   const id = ID_PREFIX + code;
   if (LOCAL) {
     const hub = new LocalHub(id);
@@ -113,16 +114,28 @@ export function openHost(code, { onReady, onConnection, onError }) {
   }
   if (!peerAvailable()) { onError("No se pudo cargar la librería de conexión (PeerJS)."); return { destroy() {} }; }
   const peer = makePeer(id);
-  peer.on("open", () => onReady(code));
+  let opened = false;
+  // Si se corta el servidor de partidas (pasa al cambiar de app para
+  // compartir el link, o con wifi inestable), los que YA están en la sala
+  // siguen conectados: solo se reintenta en silencio para que puedan
+  // entrar los que faltan.
+  const retry = setInterval(() => {
+    if (opened && peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch (e) { /* nada */ } }
+  }, 3000);
+  peer.on("open", () => { const first = !opened; opened = true; onSignal && onSignal(true); if (first) onReady(code); });
   peer.on("connection", (dc) => {
     dc.on("open", () => { const c = wrapPeerConn(dc); c.open = true; onConnection(c); });
   });
   peer.on("error", (err) => {
     if (err.type === "unavailable-id") onError("unavailable-id");
+    else if (opened && SIGNAL_ERRORS.has(err.type)) onSignal && onSignal(false);
     else onError(describeError(err));
   });
-  peer.on("disconnected", () => { try { peer.reconnect(); } catch (e) { /* nada */ } });
-  return { destroy: () => { try { peer.destroy(); } catch (e) { /* nada */ } } };
+  peer.on("disconnected", () => {
+    if (opened) onSignal && onSignal(false);
+    try { peer.reconnect(); } catch (e) { /* nada */ }
+  });
+  return { destroy: () => { clearInterval(retry); try { peer.destroy(); } catch (e) { /* nada */ } } };
 }
 
 // Invitado: se conecta a la sala del link
@@ -142,9 +155,14 @@ export function openGuest(code, { onOpen, onError }) {
   const timeout = setTimeout(() => { if (!done) onError("No se pudo conectar (tiempo agotado). Probá de nuevo o con otra red."); }, 20000);
   peer.on("open", () => {
     const dc = peer.connect(hostId, { reliable: true, serialization: "json" });
-    dc.on("open", () => { done = true; clearTimeout(timeout); const c = wrapPeerConn(dc); c.open = true; onOpen(c); });
+    dc.on("open", () => { done = true; connected = true; clearTimeout(timeout); const c = wrapPeerConn(dc); c.open = true; onOpen(c); });
   });
-  peer.on("error", (err) => { done = true; clearTimeout(timeout); onError(describeError(err)); });
+  let connected = false;
+  peer.on("error", (err) => {
+    // ya conectado al anfitrión: un corte del servidor de partidas no afecta la pelea
+    if (connected && SIGNAL_ERRORS.has(err.type)) return;
+    done = true; clearTimeout(timeout); onError(describeError(err));
+  });
   return { destroy: () => { clearTimeout(timeout); try { peer.destroy(); } catch (e) { /* nada */ } } };
 }
 

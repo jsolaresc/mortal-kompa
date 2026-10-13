@@ -141,6 +141,7 @@ class HostSession {
     this.transport = openHost(this.code, {
       onReady: () => { this.ready = true; },
       onConnection: (conn) => this.accept(conn),
+      onSignal: (ok) => { this.signalLost = !ok; },
       onError: (e) => {
         if (e === "unavailable-id") { this.code = newRoomCode(); this.open(); return; }
         this.error = e;
@@ -259,7 +260,9 @@ class HostLobbyScene {
     // título a la izquierda: a la derecha va el panel del link
     UI.text(ctx, `SALA ONLINE: ${String(this.net.code || "").toUpperCase()}`, lx, 36, { size: 30, color: COLORS.yellow, stroke: 6, align: "left" });
     if (this.net.error) {
-      UI.text(ctx, this.net.error, view.w / 2, 120, { size: 18, color: COLORS.red });
+      UI.text(ctx, this.net.error, lx, 78, { size: 15, align: "left", color: COLORS.red });
+    } else if (this.net.ready && this.net.signalLost) {
+      UI.text(ctx, "Reconectando... (los que ya entraron siguen en la sala)", lx, 78, { size: 15, align: "left", color: "#fb4" });
     } else if (!this.net.ready) {
       UI.text(ctx, "Abriendo la sala...", lx, 90, { size: 20, align: "left" });
     } else {
@@ -281,7 +284,8 @@ class HostLobbyScene {
       UI.text(ctx, it.label, lx + 150, y, { size: 21, color: it.ok ? (sel ? COLORS.yellow : "#fff") : "#666" });
       UI.addHit({ x: lx, y: y - 20, w: 300, h: 40 }, () => { this.index = k; if (it.ok) it.act(); else if (it.why) this.app.toast(it.why); });
     });
-    UI.backButton(ctx, () => this.closeRoom());
+    // acá arriba a la izquierda va el título: el volver va abajo de todo
+    UI.backButton(ctx, () => this.closeRoom(), "◄ VOLVER", y0 + items.length * 46 + 16);
   }
 }
 

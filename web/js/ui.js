@@ -330,10 +330,10 @@ export function pillButton(ctx, cx, cy, label, onTap, o = {}) {
 
 // Botón "volver" de todas las pantallas: mismo tamaño y lugar (arriba a la
 // izquierda) que en los menús 1 Jugador / Multijugador.
-export function backButton(ctx, onTap, label = "◄ VOLVER") {
+export function backButton(ctx, onTap, label = "◄ VOLVER", y = 36) {
   // siempre arrancando del mismo borde izquierdo, aunque el texto sea más largo
   const w = Math.max(110, measure(ctx, label, 15) + 44);
-  return pillButton(ctx, 25 + w / 2, 36, label, onTap, { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+  return pillButton(ctx, 25 + w / 2, y, label, onTap, { size: 15, h: 36, minW: 110, color: "#3c3c48" });
 }
 
 export function roundButton(ctx, cx, cy, r, label, onTap) {
