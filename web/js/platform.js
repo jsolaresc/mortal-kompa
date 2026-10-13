@@ -48,3 +48,22 @@ export function roomFromText(text) {
   if (/^[a-z0-9]{4,12}$/i.test(t)) return t.toLowerCase();
   return null;
 }
+
+// Última versión publicada del APK (Releases de GitHub). El archivo lleva
+// la versión en el nombre: MortalKompa_v1_03_22.apk = versión 1.3.22.
+const RELEASES_API = "https://api.github.com/repos/jsolaresc/mortal-kompa/releases/latest";
+export async function latestApk() {
+  const r = await fetch(RELEASES_API, { cache: "no-store" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  const build = parseInt(String(j.tag_name || "").replace(/\D/g, ""), 10) || 0;
+  const assets = j.assets || [];
+  const a = assets.find((x) => /^MortalKompa_v[\d_]+\.apk$/i.test(x.name)) || assets.find((x) => /\.apk$/i.test(x.name));
+  return { build, version: `1.3.${build}`, url: a ? a.browser_download_url : APK_URL, name: a ? a.name : "MortalKompa.apk" };
+}
+
+// número de compilación de esta app ("V.1.3.22" -> 22; en la web no hay)
+export function appBuild(version) {
+  const m = String(version).match(/(\d+)\.(\d+)\.(\d+)/);
+  return m ? parseInt(m[3], 10) : 0;
+}

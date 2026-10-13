@@ -74,7 +74,9 @@ export function showJoinPanel(app, onBack) {
     const room = roomFromText(input.value);
     if (!room) { app.toast("Escribí el código de 6 letras de la sala"); return; }
     close();
-    joinOnlineScene(app, room);
+    // el código es de una sala que creó este mismo aparato: se reabre
+    if (room === lastHostedRoom()) hostOnline(app, room);
+    else joinOnlineScene(app, room);
   };
   document.getElementById("join-paste").onclick = async () => {
     try {
@@ -122,10 +124,26 @@ function myName(app, fallback) { return (app.settings.playerName || "").trim() |
 // =====================================================================
 // ANFITRIÓN
 // =====================================================================
+// Última sala creada en este aparato: si se corta todo (o se cierra el
+// juego), el anfitrión la recupera escribiendo el mismo código en "Unirse".
+const LAST_ROOM_KEY = "mk_last_room";
+function rememberRoom(code) {
+  try { localStorage.setItem(LAST_ROOM_KEY, JSON.stringify({ code, at: Date.now() })); } catch (e) { /* nada */ }
+}
+function lastHostedRoom() {
+  try {
+    const r = JSON.parse(localStorage.getItem(LAST_ROOM_KEY) || "null");
+    if (r && r.code && Date.now() - r.at < 24 * 3600 * 1000) return r.code;
+  } catch (e) { /* nada */ }
+  return null;
+}
+
 class HostSession {
-  constructor(app) {
+  constructor(app, code = null) {
     this.app = app;
-    this.code = newRoomCode();
+    this.code = code || newRoomCode();
+    // sala recuperada: el servidor puede tardar en soltar el código viejo
+    this.keepCodeUntil = code ? performance.now() + 90000 : 0;
     this.clients = new Map();
     this.nextId = 1;
     this.ready = false;
@@ -139,11 +157,16 @@ class HostSession {
   }
   open() {
     this.transport = openHost(this.code, {
-      onReady: () => { this.ready = true; },
+      onReady: () => { this.ready = true; rememberRoom(this.code); },
       onConnection: (conn) => this.accept(conn),
       onSignal: (ok) => { this.signalLost = !ok; },
       onError: (e) => {
-        if (e === "unavailable-id") { this.code = newRoomCode(); this.open(); return; }
+        if (e === "unavailable-id") {
+          const old = this.transport;
+          setTimeout(() => old && old.destroy(), 0);
+          if (performance.now() < this.keepCodeUntil) { this.retryT = setTimeout(() => this.open(), 3000); return; }
+          this.code = newRoomCode(); this.open(); return;
+        }
         this.error = e;
       },
     });
@@ -210,6 +233,7 @@ class HostSession {
     }
   }
   close() {
+    clearTimeout(this.retryT);
     this.broadcast({ t: "bye" });
     audio.listeners.splice(audio.listeners.indexOf(this.listener), 1);
     setTimeout(() => this.transport && this.transport.destroy(), 300);
@@ -217,9 +241,9 @@ class HostSession {
   }
 }
 
-export function hostOnline(app) {
+export function hostOnline(app, code = null) {
   if (app.net && app.net.close) app.net.close();
-  app.net = new HostSession(app);
+  app.net = new HostSession(app, code);
   app.setScene(new HostLobbyScene(app));
 }
 
@@ -556,7 +580,7 @@ class HostBracketScene {
 // INVITADO
 // =====================================================================
 class GuestSession {
-  constructor(app, code) {
+  constructor(app, code, { retry = false } = {}) {
     this.app = app;
     this.code = code;
     this.conn = null;
@@ -566,7 +590,14 @@ class GuestSession {
     this.counts = new Array(ACTIONS.length).fill(0);
     this.sinceSend = 0;
     this.scene = null;
-    this.transport = openGuest(code, {
+    // volviendo a una sala que se cortó: se reintenta un rato mientras el
+    // anfitrión vuelve (o reabre la sala con el mismo código)
+    this.retryUntil = retry ? performance.now() + 90000 : 0;
+    this.connect();
+  }
+  connect() {
+    const app = this.app;
+    this.transport = openGuest(this.code, {
       onOpen: (conn) => {
         this.conn = conn;
         this.lastSeen = performance.now();
@@ -574,7 +605,15 @@ class GuestSession {
         conn.onClose = () => this.scene && this.scene.onMsg({ t: "closed" });
         conn.send({ t: "hello", name: myName(app, ""), ver: GAME_VERSION });
       },
-      onError: (e) => { this.error = e; },
+      onError: (e) => {
+        if (!this.conn && !this.closed && performance.now() < this.retryUntil) {
+          const old = this.transport;
+          setTimeout(() => old && old.destroy(), 0);
+          this.retryT = setTimeout(() => { if (!this.closed) this.connect(); }, 3000);
+          return;
+        }
+        this.error = e;
+      },
     });
   }
   send(m) { if (this.conn) this.conn.send(m); }
@@ -597,18 +636,20 @@ class GuestSession {
     }
   }
   close() {
+    this.closed = true;
+    clearTimeout(this.retryT);
     try { this.conn && this.conn.close(); } catch (e) { /* nada */ }
     this.transport && this.transport.destroy();
     if (this.app.net === this) this.app.net = null;
   }
 }
 
-export function joinOnlineScene(app, code) {
+export function joinOnlineScene(app, code, opts = {}) {
   // sacar ?sala= de la URL para que "volver al menú" no vuelva a entrar
   history.replaceState(null, "", location.pathname + (location.search.includes("net=local") ? "?net=local" : ""));
   app.inviteRoom = null;
   if (app.net && app.net.close) app.net.close();
-  const net = new GuestSession(app, code);
+  const net = new GuestSession(app, code, opts);
   app.net = net;
   const sc = new GuestScene(app, net);
   net.scene = sc;
@@ -637,7 +678,7 @@ class GuestScene {
     if (this.stage) { this.stage.dispose(); this.stage = null; }
     const app = this.app;
     const options = [];
-    if (canRetry) options.push({ label: "Volver a la sala", act: () => joinOnlineScene(app, code) });
+    if (canRetry) options.push({ label: "Volver a la sala", act: () => joinOnlineScene(app, code, { retry: true }) });
     options.push({ label: "Volver al menú principal", act: () => { audio.stopAllSfx(); Flow.mainMenu(app); } });
     app.setScene(new ConnectionLostScene(app, { message, options }));
   }

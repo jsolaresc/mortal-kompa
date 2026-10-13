@@ -8,7 +8,7 @@ import { audio } from "../audio.js";
 import { DB } from "../assets.js";
 import { ok, DEFAULT_KEYS, prettyKey, keyboard, keyLabel, PAD_LABELS, gamepads } from "../input.js";
 import * as Flow from "../flow.js";
-import { canOfferInstall, IS_IOS, APK_URL, IS_APP, isStandalone } from "../platform.js";
+import { canOfferInstall, IS_IOS, APK_URL, IS_APP, BRIDGE, isStandalone, latestApk, appBuild } from "../platform.js";
 
 // Como en la versión de PC: los temas de menú NO se repiten en loop;
 // cuando termina uno arranca otro al azar (distinto del anterior).
@@ -88,18 +88,47 @@ export class ListMenu {
     fullscreenButton(this.app, ctx, view);
     if (this.showLogo) {
       installButton(this.app, ctx, view);
-      UI.text(ctx, GAME_VERSION, 14, C.BASE_H - 16, { size: 14, align: "left", color: "#aaa" });   // versión abajo a la izquierda, como en PC
+      UI.text(ctx, GAME_VERSION, 46, C.BASE_H - 18, { size: 14, align: "left", color: "#aaa" });   // versión abajo a la izquierda, como en PC
     }
     UI.footer(ctx, view, this.footerText ?? footerHelp(this.app, !!this.onBack));
   }
 }
 
+let updateBusy = false;
 export function installButton(app, ctx, view) {
+  // en la app: buscar y bajar la versión nueva
+  if (IS_APP) {
+    UI.pillButton(ctx, view.w - 110, 76, "⟳ ACTUALIZAR", () => checkUpdate(app), { size: 13, h: 32, minW: 190, color: "#3c78c8" });
+    return;
+  }
   if (!canOfferInstall(app.isTouchDevice)) return;
-  UI.pillButton(ctx, view.w - 110, 76, "⬇ INSTALAR", () => {
-    if (IS_IOS) document.getElementById("install-ios").classList.remove("hidden");
-    else window.location.href = APK_URL;   // Android: baja el APK
+  UI.pillButton(ctx, view.w - 110, 76, "⬇ INSTALAR", async () => {
+    if (IS_IOS) { document.getElementById("install-ios").classList.remove("hidden"); return; }
+    // Android: baja el APK con la versión en el nombre (MortalKompa_v1_03_22.apk)
+    let url = APK_URL;
+    try { url = (await latestApk()).url; } catch (e) { /* nombre fijo */ }
+    window.location.href = url;
   }, { size: 13, h: 32, minW: 190, color: "#3ca05a" });
+}
+
+async function checkUpdate(app) {
+  if (updateBusy) return;
+  updateBusy = true;
+  app.toast("Buscando actualizaciones...", 2);
+  try {
+    const last = await latestApk();
+    if (!last.build || last.build <= appBuild(GAME_VERSION)) {
+      app.toast(`Ya tenés la última versión (${GAME_VERSION})`, 4);
+    } else if (BRIDGE && BRIDGE.update) {
+      BRIDGE.update(last.url, last.name);
+      app.toast(`Descargando la versión ${last.version}... (se instala al terminar)`, 6);
+    } else {
+      window.location.href = last.url;
+    }
+  } catch (e) {
+    app.toast("No se pudo buscar la actualización. Revisá tu internet.", 4);
+  }
+  updateBusy = false;
 }
 
 export function fullscreenButton(app, ctx, view) {
@@ -108,7 +137,7 @@ export function fullscreenButton(app, ctx, view) {
 }
 
 export function footerHelp(app, back = true) {
-  if (app.touchVisible() || (app.isTouchDevice && !gamepads.list.length)) return "Tocá una opción";
+  if (app.touchVisible() || (app.isTouchDevice && !gamepads.list.length)) return "";
   if (gamepads.list.length && gamepads.lastUsed > keyboard.lastUsed) return back ? "[dpad] elegir    [cross] confirmar    [circle] volver" : "[dpad] elegir    [cross] confirmar";
   const s = app.settings;
   const parts = [`▲▼ elegir`, `${keyLabel(s, "confirm")} / ENTER confirmar`];
@@ -145,7 +174,7 @@ export class TitleScene {
         : (this.app.isTouchDevice ? "Tocá la pantalla para empezar" : "Apretá cualquier tecla para empezar");
       UI.text(ctx, msg, view.w / 2, 400, { size: 24, color: COLORS.white });
     }
-    UI.text(ctx, GAME_VERSION, 14, C.BASE_H - 16, { size: 14, align: "left", color: "#aaa" });
+    UI.text(ctx, GAME_VERSION, 46, C.BASE_H - 18, { size: 14, align: "left", color: "#aaa" });
     fullscreenButton(this.app, ctx, view);
   }
 }
