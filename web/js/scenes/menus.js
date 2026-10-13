@@ -84,7 +84,7 @@ export class ListMenu {
     const cy = this.centerY ?? (this.showLogo ? 360 : 280);
     UI.menuList(ctx, view, this.items.map((i) => i.label), this.index, cy, (i) => this.pick(i),
       { disabled: this.items.map((i) => i.disabled) });
-    if (this.onBack) UI.pillButton(ctx, 80, 36, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+    if (this.onBack) UI.backButton(ctx, () => this.onBack());
     fullscreenButton(this.app, ctx, view);
     if (this.showLogo) {
       installButton(this.app, ctx, view);
@@ -173,7 +173,7 @@ export class DifficultyScene {
     UI.roundButton(ctx, cx - 150, cy, 34, "−", () => { this.level = Math.max(1, this.level - 1); });
     UI.roundButton(ctx, cx + 150, cy, 34, "+", () => { this.level = Math.min(10, this.level + 1); });
     UI.pillButton(ctx, cx, cy + 150, "ELEGIR", () => this.onDone(this.level), { minW: 180 });
-    UI.pillButton(ctx, 80, 40, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+    UI.backButton(ctx, () => this.onBack());
     UI.footer(ctx, view, "◄ ► cambiar   ·   confirmar para elegir");
   }
 }
@@ -197,7 +197,7 @@ export class TournamentSizeScene {
       UI.roundButton(ctx, cx - 130, cy, 28, "−", () => { this.count = Math.max(3, this.count - 1); });
       UI.roundButton(ctx, cx + 130, cy, 28, "+", () => { this.count = Math.min(16, this.count + 1); });
       UI.pillButton(ctx, cx, cy + 130, "ELEGIR", () => this.onDone(this.count), { minW: 180 });
-      UI.pillButton(ctx, 80, 40, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+      UI.backButton(ctx, () => this.onBack());
     }
     UI.footer(ctx, view, this.app.isTouchDevice ? "" : "A/D cambiar · Puño o ENTER confirma · Patada o ESC vuelve", C.BASE_H - 40);
   }
@@ -271,7 +271,7 @@ class RowsScene {
         }
       }
     });
-    UI.pillButton(ctx, 80, 36, "◄ VOLVER", () => this.back(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
+    UI.backButton(ctx, () => this.back());
     if (!touch) UI.footer(ctx, view, "▲▼ elegir   ·   ◄ ► ajustar   ·   ESC volver");
   }
 }

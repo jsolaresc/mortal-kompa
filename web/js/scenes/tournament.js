@@ -201,7 +201,7 @@ class TournamentPickScene {
     }
     UI.text(ctx, `ELEGIR LUCHADOR ${this.picks.length + 1}`, view.w / 2, 25, { size: 38, color: COLORS.yellow });
     if (this.app.isTouchDevice) {
-      UI.pillButton(ctx, 70, 30, "◄ DESHACER", () => this.undo(), { size: 13, h: 30, minW: 110, color: "#3c3c48" });
+      UI.backButton(ctx, () => this.undo(), "◄ DESHACER");
       UI.pillButton(ctx, view.w / 2, C.BASE_H - 46, "ACEPTAR", () => this.add(this.cursor), { size: 20, h: 42, minW: 200 });
       UI.footer(ctx, view, "Tocá un luchador y después ACEPTAR", C.BASE_H - 12);
     } else UI.footer(ctx, view, "Puño o ENTER confirma · Patada o ESC deshace/vuelve", C.BASE_H - 25);
@@ -266,7 +266,7 @@ class BracketScene {
       hint: this.phase === "ready" ? "Confirmar: ¡a pelear! (J1 a la izquierda, J2 a la derecha)" : "",
     });
     if (this.phase === "ready") UI.pillButton(ctx, view.w / 2, 232, "¡PELEAR!", () => this.fight(), { size: 16, h: 34, minW: 140 });
-    UI.pillButton(ctx, 70, 30, "SALIR", () => Flow.mainMenu(this.app), { size: 13, h: 30, minW: 90, color: "#3c3c48" });
+    UI.backButton(ctx, () => Flow.mainMenu(this.app), "◄ SALIR");
   }
 }
 

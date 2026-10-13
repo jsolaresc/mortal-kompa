@@ -82,12 +82,39 @@ export function showJoinPanel(app, onBack) {
       if (t) input.value = t;
     } catch (e) { app.toast("Mantené apretado el casillero y elegí Pegar"); }
   };
-  document.getElementById("join-cancel").onclick = () => { close(); onBack(); };
   app.setScene({
-    draw(ctx, view) { UI.menuBackground(ctx, view, app.t); UI.title(ctx, view, "UNIRSE A UNA SALA", 50); },
+    draw(ctx, view) { UI.menuBackground(ctx, view, app.t); UI.title(ctx, view, "UNIRSE A UNA SALA", 50); UI.backButton(ctx, () => { close(); onBack(); }); },
     update() { if (app.anyInput.justPressed("cancel")) { close(); onBack(); } },
     exit() { close(); },
   });
+}
+
+// Pantalla de error de conexión: frena la pelea y la música, y deja que el
+// jugador elija (esperar en la sala / volver al menú principal).
+class ConnectionLostScene {
+  constructor(app, { message, options }) {
+    this.app = app; this.message = message; this.options = options; this.index = 0;
+  }
+  enter() {
+    hidePanel();
+    audio.stopAllSfx();
+    audio.stopMusic();
+    audio.resumeSfx();
+    this.app.touch.fightMode = false;
+  }
+  update() {
+    const i = this.app.anyInput, n = this.options.length;
+    if (i.justPressed("up")) this.index = (this.index + n - 1) % n;
+    else if (i.justPressed("down")) this.index = (this.index + 1) % n;
+    else if (ok(i)) this.options[this.index].act();
+  }
+  draw(ctx, view) {
+    UI.menuBackground(ctx, view, this.app.t);
+    UI.overlay(ctx, view, 0.45);
+    UI.title(ctx, view, "CONEXIÓN PERDIDA", 150, COLORS.red, 44);
+    UI.text(ctx, this.message, view.w / 2, 205, { size: 20 });
+    UI.menuList(ctx, view, this.options.map((o) => o.label), this.index, 320, (k) => this.options[k].act());
+  }
 }
 
 function myName(app, fallback) { return (app.settings.playerName || "").trim() || fallback; }
@@ -124,9 +151,9 @@ class HostSession {
   accept(conn) {
     if (this.clients.size >= 15) { conn.send({ t: "full" }); setTimeout(() => conn.close(), 500); return; }
     const id = this.nextId++;
-    const cl = { id, conn, name: `Invitado ${id}`, input: new RemoteInput(), pick: null, ready: false };
+    const cl = { id, conn, name: `Invitado ${id}`, input: new RemoteInput(), pick: null, ready: false, lastSeen: performance.now() };
     this.clients.set(id, cl);
-    conn.onData = (m) => this.onMsg(cl, m);
+    conn.onData = (m) => { cl.lastSeen = performance.now(); this.onMsg(cl, m); };
     conn.onClose = () => this.drop(cl);
     conn.send({ t: "welcome", id, ver: GAME_VERSION });
   }
@@ -169,8 +196,17 @@ class HostSession {
     for (const c of this.clients.values()) c.input.poll();
     if (this.stream) {
       this.broadcast({ t: "fs", s: this.stream.snapshot(), a: this.audioBuf });
+    } else {
+      // señal de vida para los invitados (fuera de pelea casi no se manda nada)
+      this.hb = (this.hb || 0) + 1;
+      if (this.hb >= 30) { this.hb = 0; this.broadcast({ t: "hb" }); }
     }
     this.audioBuf = [];
+    // invitado que no manda nada hace 5 s: se cerró el juego o se cortó internet
+    const now = performance.now();
+    for (const c of [...this.clients.values()]) {
+      if (now - c.lastSeen > 5000) { try { c.conn.close(); } catch (e) { /* nada */ } this.drop(c); }
+    }
   }
   close() {
     this.broadcast({ t: "bye" });
@@ -245,6 +281,7 @@ class HostLobbyScene {
       UI.text(ctx, it.label, lx + 150, y, { size: 21, color: it.ok ? (sel ? COLORS.yellow : "#fff") : "#666" });
       UI.addHit({ x: lx, y: y - 20, w: 300, h: 40 }, () => { this.index = k; if (it.ok) it.act(); else if (it.why) this.app.toast(it.why); });
     });
+    UI.backButton(ctx, () => this.closeRoom());
   }
 }
 
@@ -362,7 +399,17 @@ async function netFight(app, { slugs, mystery, owners, stageDef, kind, names = n
   net.stream = scene.match;
   const prevDrop = net.onDrop;
   net.onDrop = (cl) => {
-    if (owners.includes(cl.id) && kind === "versus") backToLobby(app, `${cl.name} se desconectó`);
+    if (owners.includes(cl.id) && kind === "versus") {
+      net.stream = null;
+      if (scene.match && scene.match.stage) scene.match.stage.dispose();
+      app.setScene(new ConnectionLostScene(app, {
+        message: `${cl.name} se desconectó de la pelea`,
+        options: [
+          { label: "Volver a la sala", act: () => { playMenuMusic(); backToLobby(app); } },
+          { label: "Volver al menú principal", act: () => { if (app.net) app.net.close(); audio.stopAllSfx(); Flow.mainMenu(app); } },
+        ],
+      }));
+    }
     else if (prevDrop && kind !== "versus") prevDrop(cl);
   };
   // tecla de pausa del anfitrión: no pausa el juego, abre "abandonar"
@@ -497,7 +544,7 @@ class HostBracketScene {
     }
     drawBracket(ctx, view, st, { phase: this.phase, result: this.result, t: this.app.t, hint });
     if (this.phase === "ready") UI.pillButton(ctx, view.w / 2, 232, "¡PELEAR!", () => this.fight(), { size: 16, h: 34, minW: 140 });
-    UI.pillButton(ctx, 80, 30, "A LA SALA", () => backToLobby(this.app, "Torneo cancelado"), { size: 13, h: 30, minW: 110, color: "#3c3c48" });
+    UI.backButton(ctx, () => backToLobby(this.app, "Torneo cancelado"), "◄ A LA SALA");
   }
 }
 
@@ -518,7 +565,8 @@ class GuestSession {
     this.transport = openGuest(code, {
       onOpen: (conn) => {
         this.conn = conn;
-        conn.onData = (m) => this.scene && this.scene.onMsg(m);
+        this.lastSeen = performance.now();
+        conn.onData = (m) => { this.lastSeen = performance.now(); if (this.scene) this.scene.onMsg(m); };
         conn.onClose = () => this.scene && this.scene.onMsg({ t: "closed" });
         conn.send({ t: "hello", name: myName(app, ""), ver: GAME_VERSION });
       },
@@ -529,6 +577,11 @@ class GuestSession {
   onNameChange() { this.send({ t: "name", name: myName(this.app, "Invitado") }); }
   tick() {
     if (!this.conn) return;
+    // anfitrión que no manda nada hace 5 s: conexión perdida
+    if (!this.lostReported && performance.now() - this.lastSeen > 5000) {
+      this.lostReported = true;
+      if (this.scene) this.scene.onMsg({ t: "closed" });
+    }
     const inp = this.app.inputs[0];
     ACTIONS.forEach((a, i) => { if (inp.justPressed(a)) this.counts[i]++; });
     const mask = inp.mask();
@@ -572,6 +625,18 @@ class GuestScene {
   }
   enter() { showPanel({ app: this.app }); playMenuMusic(); }
   exit() { hidePanel(); }
+  lost(message, canRetry) {
+    if (this.mode === "left") return;
+    this.mode = "left";
+    const code = this.net.code;
+    this.net.close();
+    if (this.stage) { this.stage.dispose(); this.stage = null; }
+    const app = this.app;
+    const options = [];
+    if (canRetry) options.push({ label: "Volver a la sala", act: () => joinOnlineScene(app, code) });
+    options.push({ label: "Volver al menú principal", act: () => { audio.stopAllSfx(); Flow.mainMenu(app); } });
+    app.setScene(new ConnectionLostScene(app, { message, options }));
+  }
   leave(msg) {
     this.net.close();
     hidePanel();
@@ -639,8 +704,8 @@ class GuestScene {
         this.app.touch.fightMode = false;
         this.victory = new TournamentVictory(this.app, { slug: m.slug, label: m.label }, m.total, { onDone: false });
         break;
-      case "bye": this.leave("El anfitrión cerró la sala"); break;
-      case "closed": if (this.mode !== "left") { this.mode = "left"; this.leave("Se cortó la conexión con el anfitrión"); } break;
+      case "bye": this.lost("El anfitrión cerró la sala", false); break;
+      case "closed": if (this.mode !== "left") this.lost("Se cortó la conexión con el anfitrión", true); break;
       default: break;
     }
   }
@@ -683,6 +748,6 @@ class GuestScene {
       UI.text(ctx, "En la sala:", lx, 130, { size: 18, align: "left", color: COLORS.yellow });
       this.players.forEach((p, k) => UI.text(ctx, `${k === 0 ? "★" : "•"} ${p.name}${p.id === this.net.myId ? " (vos)" : ""}`, lx + 10, 158 + k * 24, { size: 17, align: "left" }));
     }
-    UI.pillButton(ctx, 70, C.BASE_H - 34, "SALIR", () => this.leave(), { size: 14, h: 32, minW: 100, color: "#3c3c48" });
+    UI.backButton(ctx, () => this.leave(), "◄ SALIR");
   }
 }

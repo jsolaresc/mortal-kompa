@@ -233,7 +233,7 @@ export class CharSelectScene {
     UI.text(ctx, `${this.players[0].label || "J1"}: ${e1 ? e1.name : "Aleatorio"}`, 40, C.BASE_H / 2 + 240, { size: 20, color: P1_COLOR, align: "left", baseline: "top" });
 
     if (this.app.isTouchDevice) {
-      UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.cancel(0), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
+      UI.backButton(ctx, () => this.cancel(0));
       // celular: tocar una cara la marca; ACEPTAR la elige
       const p = this.players.findIndex((pl, k) => !pl.cpu && !this.confirmed[k]);
       if (p >= 0) UI.pillButton(ctx, view.w / 2, C.BASE_H - 46, "ACEPTAR", () => this.confirm(p), { size: 20, h: 42, minW: 200 });
@@ -299,7 +299,7 @@ export class StageSelectScene {
       UI.text(ctx, c.name, x + cw / 2, y + ch + 18, { size: 18, color: sel ? COLORS.yellow : "#fff" });
       UI.addHit({ x, y, w: cw, h: ch + 30 }, () => { if (this.index === i) this.choose(i); else this.index = i; });
     });
-    UI.pillButton(ctx, 70, 30, "◄ VOLVER", () => this.onBack(), { size: 14, h: 30, minW: 100, color: "#3c3c48" });
+    UI.backButton(ctx, () => this.onBack());
     if (this.app.isTouchDevice) UI.pillButton(ctx, view.w / 2, C.BASE_H - 24, "ACEPTAR", () => this.choose(this.index), { size: 20, h: 40, minW: 200 });
     else UI.footer(ctx, view, "Confirmar elige · Patada/ESC vuelve");
   }
