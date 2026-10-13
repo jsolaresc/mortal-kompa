@@ -2,9 +2,10 @@ plugins {
     id "com.android.application"
 }
 
-// versión: la pone el workflow (-PvcBuild=N). Arranca en 200000000 para
-// quedar por encima de todos los APK anteriores (motor Python) y que se
-// instale encima sin desinstalar.
+// versión: la pone el workflow (-PvcBuild=N). versionName sigue la
+// numeración del juego (1.3.N, como los APK anteriores). versionCode es
+// interno (no se ve): arranca en 200000000 para quedar por encima de todos
+// los APK anteriores (motor Python) y que se instale encima sin desinstalar.
 def vcBuild = (project.findProperty("vcBuild") ?: "0").toInteger()
 
 android {
@@ -16,7 +17,7 @@ android {
         minSdk 24
         targetSdk 34
         versionCode 200000000 + vcBuild
-        versionName "2.0.${vcBuild}"
+        versionName "1.3.${vcBuild}"
     }
 
     signingConfigs {

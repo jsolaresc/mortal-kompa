@@ -2,7 +2,7 @@
 # navegador (carpeta web/) adentro de una app Android (android_app/).
 # Corre con cada cambio en web/ o android_app/ (o a mano desde Actions), así
 # la app queda siempre igual que la página. El APK queda en Releases:
-#   - MortalKompa-2.0.N.apk  (con número de versión)
+#   - MortalKompa-1.3.N.apk  (con número de versión)
 #   - MortalKompa.apk         (nombre fijo: es el que baja el botón "INSTALAR")
 name: Build APK
 
@@ -41,6 +41,9 @@ jobs:
           mkdir -p android_app/app/src/main/assets
           cp -r web android_app/app/src/main/assets/web
           rm -f android_app/app/src/main/assets/web/README.md "android_app/app/src/main/assets/web/Jugar en mi PC.bat"
+          # la app muestra la versión completa (V.1.3.N, igual que en Android)
+          sed -i 's/export const GAME_VERSION = "V.1.3";/export const GAME_VERSION = "V.1.3.${{ github.run_number }}";/' android_app/app/src/main/assets/web/js/config.js
+          grep -n GAME_VERSION android_app/app/src/main/assets/web/js/config.js
           du -sh android_app/app/src/main/assets/web
 
       - name: Compilar APK
@@ -52,24 +55,24 @@ jobs:
       - name: Renombrar APK
         run: |
           mkdir -p out
-          cp android_app/app/build/outputs/apk/release/app-release.apk "out/MortalKompa-2.0.${{ github.run_number }}.apk"
+          cp android_app/app/build/outputs/apk/release/app-release.apk "out/MortalKompa-1.3.${{ github.run_number }}.apk"
           cp android_app/app/build/outputs/apk/release/app-release.apk out/MortalKompa.apk
           ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
           name: MortalKompa-apk
-          path: out/MortalKompa-2.0.${{ github.run_number }}.apk
+          path: out/MortalKompa-1.3.${{ github.run_number }}.apk
 
       - name: Publicar en Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: app-${{ github.run_number }}
-          name: Mortal Kompa Android 2.0.${{ github.run_number }}
+          name: Mortal Kompa Android 1.3.${{ github.run_number }}
           make_latest: true
           body: "Instalar en el celular: bajar MortalKompa.apk y abrirlo (permitir instalar apps de origen desconocido). Se instala encima de la versión anterior."
           files: |
-            out/MortalKompa-2.0.${{ github.run_number }}.apk
+            out/MortalKompa-1.3.${{ github.run_number }}.apk
             out/MortalKompa.apk
 
       - name: Subir final del log a la rama build-logs (si falló)

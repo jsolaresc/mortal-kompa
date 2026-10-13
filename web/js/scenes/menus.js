@@ -86,7 +86,10 @@ export class ListMenu {
       { disabled: this.items.map((i) => i.disabled) });
     if (this.onBack) UI.pillButton(ctx, 80, 36, "◄ VOLVER", () => this.onBack(), { size: 15, h: 36, minW: 110, color: "#3c3c48" });
     fullscreenButton(this.app, ctx, view);
-    if (this.showLogo) installButton(this.app, ctx, view);
+    if (this.showLogo) {
+      installButton(this.app, ctx, view);
+      UI.text(ctx, GAME_VERSION, 14, C.BASE_H - 16, { size: 14, align: "left", color: "#aaa" });   // versión abajo a la izquierda, como en PC
+    }
     UI.footer(ctx, view, this.footerText ?? footerHelp(this.app, !!this.onBack));
   }
 }
