@@ -73,9 +73,8 @@ export function onlineMenu(app, index = 0) {
     title: "ONLINE", index,
     onBack: () => multiplayerMenu(app, 1),
     items: [
-      { label: "2 Jugadores", action: () => hostOnline(app, "versus") },
-      { label: "Torneo", action: () => hostOnline(app, "tournament") },
-      { label: "Unirse con un link", action: () => showJoinPanel(app, () => onlineMenu(app, 2)) },
+      { label: "Crear sala", action: () => hostOnline(app) },
+      { label: "Unirse", action: () => showJoinPanel(app, () => onlineMenu(app, 1)) },
     ],
   }));
 }

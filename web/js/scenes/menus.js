@@ -8,7 +8,7 @@ import { audio } from "../audio.js";
 import { DB } from "../assets.js";
 import { ok, DEFAULT_KEYS, prettyKey, keyboard, keyLabel, PAD_LABELS, gamepads } from "../input.js";
 import * as Flow from "../flow.js";
-import { canOfferInstall, IS_IOS, APK_URL } from "../platform.js";
+import { canOfferInstall, IS_IOS, APK_URL, IS_APP, isStandalone } from "../platform.js";
 
 // Como en la versión de PC: los temas de menú NO se repiten en loop;
 // cuando termina uno arranca otro al azar (distinto del anterior).
@@ -283,7 +283,7 @@ export class OptionsScene extends RowsScene {
   rows() {
     return [
       { label: "Sonido", act: () => this.app.setScene(new SoundOptionsScene(this.app, { onBack: () => this.app.setScene(this) })) },
-      { label: `Pantalla completa: ${document.fullscreenElement ? "Sí" : "No"}`, act: () => this.app.toggleFullscreen(),
+      { label: `Pantalla completa: ${(IS_APP || isStandalone() || document.fullscreenElement) ? "Sí" : "No"}`, act: () => { if (!IS_APP && !isStandalone()) this.app.toggleFullscreen(); },
         disabled: !document.fullscreenEnabled && !document.fullscreenElement },
       { label: "Controles", act: () => this.app.setScene(new ControlOptionsScene(this.app, { onBack: () => this.app.setScene(this) })) },
     ];

@@ -22,11 +22,11 @@ En el menú principal, desde el celular, aparece **INSTALAR**:
   pantalla de inicio). Safari no deja que una página lo haga sola.
 
 ## Online: invitar por link
-Multijugador → **Online** → **2 Jugadores** o **Torneo**. Aparece el link para
+Multijugador → **Online** → **Crear sala**. Arriba aparece el código (ej. 4MUKC7) y el link para
 copiarlo o compartirlo (WhatsApp, mail...). Quien lo abre (en cualquier celular o PC, no hace
 falta estar en la misma red) entra a la sala y el anfitrión arranca cuando
 están todos (torneo: 3 o más). También se puede entrar con
-**Online > Unirse con un link** (pegando el link): útil desde la app de Android.
+**Online > Unirse** escribiendo el código de 6 letras (o pegando el link). Con 1 invitado se pelea 1 vs 1; con 2 o más, torneo.
 La app y el navegador juegan juntos.
 
 - El que invita corre la pelea; los demás le mandan sus botones y reciben lo que

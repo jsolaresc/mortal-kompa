@@ -36,7 +36,7 @@ export function canOfferInstall(isTouch = false) {
 
 // Saca el código de sala de un link de invitación (o de un código suelto)
 export function roomFromText(text) {
-  const t = String(text || "").trim();
+  const t = String(text || "").trim().replace(/\s+/g, "");
   if (!t) return null;
   try {
     const u = new URL(t);

@@ -66,10 +66,13 @@ export function showJoinPanel(app, onBack) {
   const input = document.getElementById("join-link");
   p.classList.remove("hidden");
   input.value = "";
+  input.oninput = () => { if (!/[\/:?]/.test(input.value)) input.value = input.value.toUpperCase(); };
+  input.onkeydown = (e) => { if (e.key === "Enter") document.getElementById("join-go").click(); };
+  setTimeout(() => input.focus(), 50);
   const close = () => { p.classList.add("hidden"); };
   document.getElementById("join-go").onclick = () => {
     const room = roomFromText(input.value);
-    if (!room) { app.toast("Pegá el link que te mandaron"); return; }
+    if (!room) { app.toast("Escribí el código de 6 letras de la sala"); return; }
     close();
     joinOnlineScene(app, room);
   };
@@ -81,7 +84,7 @@ export function showJoinPanel(app, onBack) {
   };
   document.getElementById("join-cancel").onclick = () => { close(); onBack(); };
   app.setScene({
-    draw(ctx, view) { UI.menuBackground(ctx, view, app.t); UI.title(ctx, view, "UNIRSE CON UN LINK", 50); },
+    draw(ctx, view) { UI.menuBackground(ctx, view, app.t); UI.title(ctx, view, "UNIRSE A UNA SALA", 50); },
     update() { if (app.anyInput.justPressed("cancel")) { close(); onBack(); } },
     exit() { close(); },
   });
@@ -177,10 +180,9 @@ class HostSession {
   }
 }
 
-export function hostOnline(app, mode = "versus") {
+export function hostOnline(app) {
   if (app.net && app.net.close) app.net.close();
   app.net = new HostSession(app);
-  app.net.mode = mode;   // "versus" (2 jugadores) | "tournament"
   app.setScene(new HostLobbyScene(app));
 }
 
@@ -198,15 +200,13 @@ class HostLobbyScene {
   items() {
     const n = this.net.clients.size;
     const close = { label: "Cerrar sala", ok: true, act: () => this.closeRoom() };
-    if (this.net.mode === "tournament") {
-      return [{ label: "Empezar torneo", ok: n >= 2, act: () => hostTournament(this.app), why: "El torneo necesita 3 jugadores o más" }, close];
-    }
-    return [{ label: "Empezar pelea", ok: n >= 1, act: () => host1v1(this.app), why: "Falta que entre alguien con tu link" }, close];
+    // con 1 invitado se pelea 1 vs 1; con 2 o más, torneo entre todos
+    if (n >= 2) return [{ label: "Empezar torneo", ok: true, act: () => hostTournament(this.app) }, close];
+    return [{ label: "Empezar pelea", ok: n >= 1, act: () => host1v1(this.app), why: "Falta que entre alguien a la sala" }, close];
   }
   closeRoom() {
-    const idx = this.net.mode === "tournament" ? 1 : 0;
     this.net.close();
-    Flow.onlineMenu(this.app, idx);
+    Flow.onlineMenu(this.app, 0);
   }
   update() {
     const i = this.app.anyInput;
@@ -221,13 +221,13 @@ class HostLobbyScene {
     UI.menuBackground(ctx, view, this.app.t);
     const lx = 40;
     // título a la izquierda: a la derecha va el panel del link
-    UI.text(ctx, this.net.mode === "tournament" ? "SALA ONLINE: TORNEO" : "SALA ONLINE: 2 JUGADORES", lx, 36, { size: 30, color: COLORS.yellow, stroke: 6, align: "left" });
+    UI.text(ctx, `SALA ONLINE: ${String(this.net.code || "").toUpperCase()}`, lx, 36, { size: 30, color: COLORS.yellow, stroke: 6, align: "left" });
     if (this.net.error) {
       UI.text(ctx, this.net.error, view.w / 2, 120, { size: 18, color: COLORS.red });
     } else if (!this.net.ready) {
       UI.text(ctx, "Abriendo la sala...", lx, 90, { size: 20, align: "left" });
     } else {
-      UI.text(ctx, "Mandale el link a tus amigos (panel de la derecha)", lx, 78, { size: 15, align: "left", color: "#cfe" });
+      UI.text(ctx, "Pasales el código o mandales el link (panel de la derecha)", lx, 78, { size: 15, align: "left", color: "#cfe" });
     }
     UI.text(ctx, "En la sala:", lx, 116, { size: 18, align: "left", color: COLORS.yellow });
     this.net.players().forEach((p, k) => {

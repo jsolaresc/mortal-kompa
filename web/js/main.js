@@ -23,7 +23,7 @@ export const app = {
   touch: new TouchControls(),
   inputs: [],
   isTouchDevice: IS_TOUCH_DEVICE,
-  inviteRoom: new URLSearchParams(location.search).get("sala"),
+  inviteRoom: (new URLSearchParams(location.search).get("sala") || "").trim().toLowerCase() || null,
   lastTouchAt: 0,
 };
 

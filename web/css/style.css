@@ -99,3 +99,5 @@ canvas#game {
 #join button { flex: 1 1 0; }
 #join button.secondary { background: #3c3c48; }
 #install-ios button { flex: 1 1 0; }
+
+#join #join-link { font-size: 22px; letter-spacing: 3px; text-align: center; text-transform: none; }
