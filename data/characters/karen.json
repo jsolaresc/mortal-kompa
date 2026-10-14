@@ -21,7 +21,7 @@
     "punch": {
       "fps": 20,
       "loop": false,
-      "damage": 8,
+      "damage": 6,
       "reach": 65,
       "hit_height": 60,
       "hit_offset_y": 100,
@@ -33,7 +33,7 @@
     "kick": {
       "fps": 14,
       "loop": false,
-      "damage": 8,
+      "damage": 6,
       "reach": 80,
       "hit_height": 65,
       "hit_offset_y": 75,
@@ -45,7 +45,7 @@
     "special": {
       "fps": 14,
       "loop": false,
-      "damage": 20,
+      "damage": 18,
       "reach": 100,
       "hit_height": 80,
       "hit_offset_y": 85,
