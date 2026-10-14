@@ -1054,7 +1054,7 @@ class Character:
             "visual_y_offset": cfg.get("visual_y_offset", 0) * C.RES_SCALE,
         }
 
-    def receive_hit(self, damage, knockback=12, critical=False):
+    def receive_hit(self, damage, knockback=12, critical=False, blocked_damage=None):
         if self.knocked_out:
             return
         # 'knockback' llega en espacio base (960x540) desde todos sus
@@ -1066,7 +1066,7 @@ class Character:
             C.SPECIAL_HITS_REQUIRED, self.hits_taken_since_special + 1
         )
         if self.blocking:
-            damage = max(1, int(damage * 0.15 * 0.4))  # bloquear reduce mucho el daño (15% del original, y de ESO un 60% menos)
+            damage = blocked_damage if blocked_damage is not None else max(1, int(damage * 0.15 * 0.4))  # bloquear reduce mucho el daño (15% del original, y de ESO un 60% menos)
             knockback = knockback * 0.3
             if not self._play_character_sound("block", volume=0.8):
                 self.sound_manager.play_sfx_fallback(None, "block_impact", volume=0.8)

@@ -371,18 +371,18 @@ export class Character {
     };
   }
 
-  receiveHit(damage, knockback = 12, critical = false) {
+  receiveHit(damage, knockback = 12, critical = false, blockedDamage = null) {
     if (this.knockedOut) return;
     this.hitsTakenSinceSpecial = Math.min(C.SPECIAL_HITS_REQUIRED, this.hitsTakenSinceSpecial + 1);
     if (this.blocking) {
-      damage = Math.max(1, Math.floor(damage * 0.15 * 0.4));
+      damage = blockedDamage ?? Math.max(1, Math.floor(damage * 0.15 * 0.4));
       knockback *= 0.3;
       if (!this.playCharacterSound("block", 0.8)) audio.playSfx("block_impact", 0.8);
     } else {
       audio.playSfx(critical ? "critical_hit" : "hit_impact", 1);
       this.playCharacterSound("hit", 1, C.VOICE_LINE_CHANCE, true);
     }
-    this.health = Math.max(0, this.health - damage);
+    this.health = Math.max(0, Math.round((this.health - damage) * 100) / 100);
     this.velX = -this.facing * knockback;
     this.hitFlashTimer = 0.12;
     if (this.health <= 0) {

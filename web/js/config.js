@@ -28,9 +28,11 @@ export const ROUND_TIME = 60;        // segundos por round
 export const ROUNDS_TO_WIN = 2;      // al mejor de 3
 
 export const SPECIAL_HITS_REQUIRED = 5;   // golpes RECIBIDOS para habilitar el especial
-export const SPECIAL_DAMAGE_MULT = 1.10;
+export const SPECIAL_DAMAGE_MULT = 1.0;
 export const CRITICAL_HIT_CHANCE = 0.02;  // solo puño/patada
-export const CRITICAL_HIT_MULT = 1.30;
+export const CRITICAL_HIT_MULT = 2.0;    // crítico = doble daño
+// daño que recibe el que BLOQUEA, según el ataque
+export const BLOCK_DAMAGE = { punch: 0.5, kick: 0.5, special: 2, ranged: 0.1, ranged_crouch: 0.1 };
 export const SOUND_RANDOM_CHANCE = 0.10;
 export const VOICE_LINE_CHANCE = 0.05;
 

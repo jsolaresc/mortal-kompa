@@ -2,7 +2,7 @@
   "name": "Noah",
   "sprite_folder": "assets/characters/noah",
   "scale": 0.5342,
-  "health": 95,
+  "health": 100,
   "walk_speed": 4.5,
   "projectile_image": "projectile.png",
   "animations": {
@@ -32,7 +32,7 @@
     "kick": {
       "fps": 12,
       "loop": false,
-      "damage": 12,
+      "damage": 8,
       "reach": 72,
       "hit_height": 55,
       "hit_offset_y": 55,
@@ -43,7 +43,7 @@
     "special": {
       "fps": 12,
       "loop": false,
-      "damage": 18,
+      "damage": 20,
       "reach": 85,
       "hit_height": 70,
       "hit_offset_y": 80,
@@ -55,7 +55,7 @@
     "ranged": {
       "fps": 12,
       "loop": false,
-      "damage": 4,
+      "damage": 2,
       "active_frames": [
         2
       ],

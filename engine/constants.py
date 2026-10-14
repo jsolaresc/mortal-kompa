@@ -118,14 +118,15 @@ ROUND_TIME = 60                # segundos por round
 ROUNDS_TO_WIN = 2               # al mejor de 3
 
 SPECIAL_HITS_REQUIRED = 5       # golpes que hay que RECIBIR para poder usar el especial
-SPECIAL_DAMAGE_MULT = 1.10      # el Especial pega un 10% más que el 'damage' de su JSON
+SPECIAL_DAMAGE_MULT = 1.0      # el Especial pega un 10% más que el 'damage' de su JSON
 
 # Golpe crítico: SÓLO para puñetazo y patada (no Especial, no a distancia)
 # -- cada uno tiene esta probabilidad de salir crítico, pegando ese %
 # de más y sonando con un efecto de sonido propio, bien distinto del
 # golpe normal (ver Character.receive_hit / resolve_combat en main.py).
 CRITICAL_HIT_CHANCE = 0.02      # 2% de posibilidades por golpe
-CRITICAL_HIT_MULT = 1.30        # 30% más de daño cuando sale crítico
+BLOCK_DAMAGE = {"punch": 0.5, "kick": 0.5, "special": 2, "ranged": 0.1, "ranged_crouch": 0.1}  # daño al bloquear
+CRITICAL_HIT_MULT = 2.0        # 30% más de daño cuando sale crítico
 
 # Si un personaje tiene VARIOS audios asignados a una misma acción (lista en
 # vez de un solo archivo en el JSON), cada uno tiene esta probabilidad

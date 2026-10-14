@@ -33,7 +33,7 @@
     "kick": {
       "fps": 14,
       "loop": false,
-      "damage": 12,
+      "damage": 8,
       "reach": 115,
       "hit_height": 71,
       "hit_offset_y": 82,
@@ -57,7 +57,7 @@
     "ranged": {
       "fps": 14,
       "loop": false,
-      "damage": 4,
+      "damage": 2,
       "active_frames": [
         3
       ],
@@ -92,7 +92,7 @@
     "ranged_crouch": {
       "fps": 14,
       "loop": false,
-      "damage": 4,
+      "damage": 2,
       "active_frames": [
         3
       ],

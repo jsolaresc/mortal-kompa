@@ -269,7 +269,7 @@ def resolve_combat(attacker, defender, sound_manager):
         if is_critical:
             damage = damage * C.CRITICAL_HIT_MULT
         was_blocking = defender.blocking
-        defender.receive_hit(damage, critical=is_critical)
+        defender.receive_hit(damage, critical=is_critical, blocked_damage=C.BLOCK_DAMAGE.get(attacker.state, 0.5))
         attacker.attack_has_hit = True
         # El "block" de siempre ya suena adentro de receive_hit si se
         # cubrió -- este sonido extra de "conectó el Especial" es aparte,
@@ -322,7 +322,7 @@ def update_projectiles(projectiles, p1, p2, dt=1 / 60, world_w=None):
             and proj.alive
             and proj.get_hitbox().colliderect(target.get_hurtbox())
         ):
-            target.receive_hit(proj.damage, knockback=8)
+            target.receive_hit(proj.damage, knockback=8, blocked_damage=C.BLOCK_DAMAGE["ranged"])
             # el sonido de impacto es del personaje que TIRÓ el proyectil
             # (su celular, su pelota, lo que sea), con respaldo genérico
             if not proj.owner._play_character_sound("projectile_hit"):

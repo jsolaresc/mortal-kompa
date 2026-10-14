@@ -103,7 +103,7 @@ export class Match {
     const crit = (att.state === S.PUNCH || att.state === S.KICK) && Math.random() < C.CRITICAL_HIT_CHANCE;
     if (crit) dmg *= C.CRITICAL_HIT_MULT;
     const wasBlocking = def.blocking;
-    def.receiveHit(dmg, 12, crit);
+    def.receiveHit(dmg, 12, crit, C.BLOCK_DAMAGE[att.state] ?? 0.5);
     att.attackHasHit = true;
     if (att.state === S.SPECIAL && !wasBlocking) audio.playSfx("special_hit", 1);
     if (!wasBlocking) att.playCharacterSound("give_hit", 1, C.VOICE_LINE_CHANCE, true);
@@ -130,7 +130,7 @@ export class Match {
       }
       const target = p.owner === this.f[0] ? this.f[1] : this.f[0];
       if (!target.knockedOut && p.alive && overlap(p.getHitbox(), target.getHurtbox())) {
-        target.receiveHit(p.damage, 8);
+        target.receiveHit(p.damage, 8, false, C.BLOCK_DAMAGE.ranged);
         if (!p.owner.playCharacterSound("projectile_hit")) audio.playSfx("projectile_hit", 0.9);
         p.alive = false;
       }
