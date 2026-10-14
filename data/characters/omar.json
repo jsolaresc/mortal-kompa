@@ -20,7 +20,7 @@
       "extra_scale": 1.05
     },
     "punch": {
-      "fps": 16,
+      "fps": 20,
       "loop": false,
       "damage": 8,
       "reach": 95,

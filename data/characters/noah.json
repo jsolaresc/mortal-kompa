@@ -19,7 +19,7 @@
       "loop": false
     },
     "punch": {
-      "fps": 14,
+      "fps": 20,
       "loop": false,
       "damage": 8,
       "reach": 60,
@@ -30,7 +30,7 @@
       ]
     },
     "kick": {
-      "fps": 12,
+      "fps": 14,
       "loop": false,
       "damage": 8,
       "reach": 72,
@@ -41,7 +41,7 @@
       ]
     },
     "special": {
-      "fps": 12,
+      "fps": 14,
       "loop": false,
       "damage": 20,
       "reach": 85,
@@ -53,7 +53,7 @@
       ]
     },
     "ranged": {
-      "fps": 12,
+      "fps": 14,
       "loop": false,
       "damage": 2,
       "active_frames": [
