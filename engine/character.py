@@ -989,7 +989,7 @@ class Character:
         # para subir/bajar un poco la altura de salida sin tener que
         # inventar un nuevo escalón entre los de arriba.
         offset_y *= cfg.get("launch_offset_mult", 1.0)
-        launch_x = self.x + (36 * C.RES_SCALE * self.facing)
+        launch_x = self.x + (cfg.get("launch_forward", 36) * C.RES_SCALE * self.facing)
         launch_y = self.y - offset_y
 
         image_paths = self.projectile_frame_paths

@@ -336,7 +336,7 @@ export class Character {
 
     const H = { high: 220, mid: 105, crouch_mid: 65, low: 25 };
     let offY = (H[cfg.launch_height || "mid"] ?? 105) * (cfg.launch_offset_mult ?? 1);
-    const launchX = this.x + 36 * this.facing;
+    const launchX = this.x + (cfg.launch_forward ?? 36) * this.facing;
     const launchY = this.y - offY;
 
     let frames = this.projectileFrames;

@@ -104,7 +104,9 @@
       "speed": 9,
       "launch_height": "crouch_mid",
       "projectile_mode": "spin",
-      "launch_offset_mult": 1.18,
+      "launch_offset_mult": 2.08,
+      "launch_forward": 70,
+      "visual_y_offset": 25,
       "extra_scale": 0.92
     }
   },
