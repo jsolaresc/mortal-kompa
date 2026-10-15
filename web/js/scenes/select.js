@@ -84,6 +84,8 @@ export class CharSelectScene {
     this.cpuTimer = 0.9;
     this.cpuMoves = 3 + Math.floor(Math.random() * 4);
     this.doneTimer = null;
+    // nombres del locutor bajados de antemano: así suenan apenas se elige
+    for (const c of DB.roster) audio.load(announcerNamePath(c));
   }
 
   layout(view) {

@@ -143,6 +143,7 @@ class TournamentPickScene {
   constructor(app, count) {
     this.app = app; this.count = count; this.picks = []; this.cursor = 0;
     this.cells = DB.roster;
+    for (const c of this.cells) audio.load(announcerNamePath(c));
   }
   update() {
     const i = this.app.anyInput;

@@ -101,7 +101,10 @@ class AudioManager {
     } else if (buf === undefined || buf instanceof Promise) {
       const t0 = performance.now();
       this.load(path).then((b) => {
-        if (b && performance.now() - t0 < 400) this._start(b, volume, category);
+        // un efecto que llega tarde ya no tiene sentido, pero el nombre del
+        // luchador sí (en el celular bajarlo puede tardar más de 0,4 s)
+        const wait = category === "announcer" ? 3000 : 400;
+        if (b && performance.now() - t0 < wait) this._start(b, volume, category);
       });
     }
   }
