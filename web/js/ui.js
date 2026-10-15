@@ -111,7 +111,8 @@ export function menuBackground(ctx, view, t = 0, bg = "select", dim = 0.35) {
 }
 
 export function title(ctx, view, str, y = 46, color = COLORS.yellow, size = 34) {
-  text(ctx, str, view.w / 2, y, { size, color, stroke: 6 });
+  const r = wrapText(ctx, str, size, textMaxW(view));
+  r.lines.forEach((l, i) => text(ctx, l, view.w / 2, y + i * r.size * 1.15, { size: r.size, color, stroke: 6 }));
 }
 
 export function logo(ctx, view, y = 120, scale = 1) {
@@ -190,8 +191,11 @@ export function drawHud(ctx, view, hud) {
   const [a, b] = hud.f;
   healthBar(ctx, m, HUD_BAR_Y, barW, HUD_BAR_H, a.health / a.maxHealth, false);
   healthBar(ctx, view.w - m - barW, HUD_BAR_Y, barW, HUD_BAR_H, b.health / b.maxHealth, true);
-  text(ctx, a.name, m, HUD_NAME_Y + 8, { size: 18, align: "left" });
-  text(ctx, b.name, view.w - m, HUD_NAME_Y + 8, { size: 18, align: "right" });
+  // nombres largos: se achica la letra para no pisar los pips del especial
+  const nameW = barW - (hudOpts.showSpecialPips ? 130 : 10);
+  const fit = (s) => { let z = 18; while (z > 11 && measure(ctx, s, z) > nameW) z -= 1; return z; };
+  text(ctx, a.name, m, HUD_NAME_Y + 8, { size: fit(a.name), align: "left" });
+  text(ctx, b.name, view.w - m, HUD_NAME_Y + 8, { size: fit(b.name), align: "right" });
   // con controles táctiles, el botón de Especial reemplaza a los pips
   if (hudOpts.showSpecialPips) {
     specialPips(ctx, m + barW - 3, HUD_NAME_Y + 8, a.hits, C.SPECIAL_HITS_REQUIRED, true, hud.t);
@@ -219,16 +223,42 @@ export function drawHud(ctx, view, hud) {
   text(ctx, String(Math.max(0, Math.floor(hud.time))), view.w / 2, HUD_BAR_Y + HUD_BAR_H / 2 + 1, { size: 30 });
 }
 
+// Parte un texto en renglones que entren en maxW (por palabras; si una
+// sola palabra no entra ni sola, achica la letra). Devuelve {lines, size}.
+export function wrapText(ctx, str, size, maxW, minSize = 18) {
+  const words = String(str).split(/[ \t\n]+/).filter(Boolean);   // el espacio duro (\u00a0) no corta
+  while (size > minSize && words.some((w) => measure(ctx, w, size) > maxW)) size -= 2;
+  const lines = [];
+  let cur = "";
+  for (const w of words) {
+    const t = cur ? cur + " " + w : w;
+    if (cur && measure(ctx, t, size) > maxW) { lines.push(cur); cur = w; } else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return { lines, size };
+}
+function textMaxW(view) { return Math.min(view.w - 80, 900); }
+
 export function centerText(ctx, view, str, color = COLORS.white, yOff = 0, size = 64) {
-  text(ctx, str, view.w / 2, C.BASE_H / 2 + yOff, { size, color, shadow: false });
+  const r = wrapText(ctx, str, size, textMaxW(view));
+  const lh = r.size * 1.12;
+  const y0 = C.BASE_H / 2 + yOff - ((r.lines.length - 1) * lh) / 2;
+  r.lines.forEach((l, i) => text(ctx, l, view.w / 2, y0 + i * lh, { size: r.size, color, shadow: false }));
 }
 
-// título de pantalla como el de PC: sombra negra suave, sin contorno
+// título de pantalla como el de PC: sombra negra suave, sin contorno.
+// Si no entra en un renglón, sigue en los de abajo.
 export function pcTitle(ctx, view, str, y, color = COLORS.yellow, size = 38) {
-  ctx.save(); ctx.globalAlpha = 140 / 255;
-  text(ctx, str, view.w / 2 + 2, y + 2, { size, color: "#000", shadow: false });
-  ctx.restore();
-  text(ctx, str, view.w / 2, y, { size, color, shadow: false });
+  const r = wrapText(ctx, str, size, textMaxW(view));
+  const lh = r.size * 1.15;
+  r.lines.forEach((l, i) => {
+    const ly = y + i * lh;
+    ctx.save(); ctx.globalAlpha = 140 / 255;
+    text(ctx, l, view.w / 2 + 2, ly + 2, { size: r.size, color: "#000", shadow: false });
+    ctx.restore();
+    text(ctx, l, view.w / 2, ly, { size: r.size, color, shadow: false });
+  });
+  return r.lines.length * lh;
 }
 
 export function koBanner(ctx, view, kind, t = 0) {

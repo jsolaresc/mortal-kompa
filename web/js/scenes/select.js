@@ -13,7 +13,7 @@ const RANDOM = "__random__";
 // Mismos colores y medidas que la selección de Mortal Kompa de PC
 // (engine/menu.py, calibrado sobre el lienzo base 960x540).
 export const P1_COLOR = "rgb(80,170,240)";
-const P2_COLOR = "rgb(240,80,90)";
+export const P2_COLOR = "rgb(240,80,90)";
 const CPU_COLOR = "rgb(240,200,50)";
 export const FRAME_COLOR = "rgb(45,45,52)";
 export const GRID_TOP = 70, GRID_BOTTOM_MARGIN = 95;
@@ -54,7 +54,7 @@ export function drawThumb(ctx, img, x, y, s, r = 8) {
   ctx.drawImage(img, x, y, s, s); ctx.restore();
 }
 
-function drawFlipped(ctx, img, x, y, w, h, flip) {
+export function drawFlipped(ctx, img, x, y, w, h, flip) {
   if (!img) return;
   ctx.save();
   if (flip) { ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, h); }

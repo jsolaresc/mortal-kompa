@@ -9,10 +9,11 @@ import * as C from "../config.js";
 import { COLORS } from "../config.js";
 import * as UI from "../ui.js";
 import { audio } from "../audio.js";
-import { DB, randomStage, secretStage } from "../assets.js";
+import { DB, randomStage, secretStage, loadCharacterFrames } from "../assets.js";
+import { Character } from "../character.js";
 import { ok } from "../input.js";
 import { Match, announcerNamePath } from "../match.js";
-import { drawRandomTile, gridLayout, drawThumb, P1_COLOR, FRAME_COLOR, GRID_TOP, GRID_BOTTOM_MARGIN, SIDE_PANEL_W, SIDE_MARGIN, GRID_SIDE_GAP, GAP, SEL_FRAME_PAD } from "./select.js";
+import { drawRandomTile, gridLayout, drawThumb, drawFlipped, P1_COLOR, P2_COLOR, FRAME_COLOR, GRID_TOP, GRID_BOTTOM_MARGIN, SIDE_PANEL_W, SIDE_MARGIN, GRID_SIDE_GAP, GAP, SEL_FRAME_PAD } from "./select.js";
 import * as Flow from "../flow.js";
 
 export function labelPicks(picks) {
@@ -67,68 +68,204 @@ export class TournamentBracket {
       matches: this.matches.map(([a, b]) => [e(a), e(b)]),
       results: this.results.map((r) => r.label), bye: e(this.bye), champion: e(this.champion),
       total: this.entrants.length,
-      history: this.history.map((h) => ({ round: h.round, winners: h.results.map((r) => r.label) })),
+      history: this.history.map((h) => ({
+        round: h.round, matches: h.matches.map(([a, b]) => [e(a), e(b)]), bye: e(h.bye), results: h.results.map((r) => r.label),
+      })),
     };
   }
 }
 
-function portrait(ctx, slug, x, y, s) {
-  const ent = DB.bySlug[slug];
+// ---------------------------------------------------------------------
+// Cuadro del torneo, igual que en PC (engine/menu.py
+// TournamentBracketScreen): árbol completo desde la Ronda 1 (las líneas
+// no cambian en todo el torneo), tarjetas que van subiendo a medida que
+// se ganan los cruces, y las poses de los dos que pelean a los costados.
+// ---------------------------------------------------------------------
+const RISE_DURATION = 0.8;     // las poses "suben" al entrar a cada pelea
+export const RESULT_DURATION = 1.8;   // el perdedor "cae" en la pantalla de resultado
+const LINE_COLOR = "rgb(150,150,158)";
+const GREY = "rgb(90,90,100)", WIN_GREY = "rgb(120,120,128)", BYE_GREY = "rgb(140,140,148)";
+
+// misma estructura de slots que _build_slot_structure (PC)
+function slotStructure(leafCount) {
+  let level = [...Array(leafCount).keys()];
+  const rounds = [];
+  let nextId = leafCount;
+  while (level.length > 1) {
+    const slots = [...level];
+    const bye = slots.length % 2 === 1 ? slots.pop() : null;
+    const pairs = [];
+    for (let i = 0; i < slots.length; i += 2) pairs.push([slots[i], slots[i + 1]]);
+    const winnerSlots = pairs.map((_, i) => nextId + i);
+    rounds.push({ pairs, bye, winnerSlots });
+    nextId += pairs.length;
+    level = [...winnerSlots, ...(bye !== null ? [bye] : [])];
+  }
+  return rounds;
+}
+
+function bracketLayout(st, view) {
+  const struct = slotStructure(st.total);
+  const r1 = st.history.length ? st.history[0] : { matches: st.matches, bye: st.bye };
+  let card = 40, pairGap = card * 0.62, branchGap = card * 0.55;
+  const nM = r1.matches.length, hasBye = !!r1.bye, entries = nM + (hasBye ? 1 : 0);
+  const matchHalf = () => pairGap + card * 0.5;
+  const natural = matchHalf() * 2 * nM + (hasBye ? card : 0) + branchGap * Math.max(0, entries - 1);
+  const push = 70;
+  const budget = (view.w - 2 * SIDE_MARGIN - 2 * SIDE_PANEL_W) + 2 * push + 2 * SIDE_PANEL_W * 0.2;
+  if (natural > budget && budget > 0) { card *= budget / natural; pairGap = card * 0.62; branchGap = card * 0.55; }
+  const centerBottom = C.BASE_H - 110;
+  const rowH = 330 / (struct.length + 1);
+  const leafY = centerBottom - rowH * 0.5;
+  const totalW = matchHalf() * 2 * nM + (hasBye ? card : 0) + branchGap * Math.max(0, entries - 1);
+  let cx = view.w / 2 - totalW / 2;
+  const pos = {};
+  for (let m = 0; m < nM; m++) {
+    const sc = cx + matchHalf();
+    cx += matchHalf() * 2 + branchGap;
+    pos[2 * m] = [sc - pairGap, leafY];
+    pos[2 * m + 1] = [sc + pairGap, leafY];
+  }
+  if (hasBye) pos[2 * nM] = [cx + card * 0.5, leafY];
+  const lines = [], winnerPos = {}, byePos = {};
+  const minGap = card * 1.05;
+  let curY = leafY;
+  struct.forEach((rnd, ri) => {
+    const nextY = curY - rowH;
+    const raw = rnd.pairs.map(([a, b], i) => [rnd.winnerSlots[i], (pos[a][0] + pos[b][0]) / 2]);
+    if (rnd.bye !== null) raw.push([rnd.bye, pos[rnd.bye][0]]);
+    raw.sort((p, q) => p[1] - q[1]);
+    const resolved = {};
+    let prev = null;
+    for (let [id, x] of raw) { if (prev !== null && x - prev < minGap) x = prev + minGap; resolved[id] = x; prev = x; }
+    rnd.pairs.forEach(([a, b], i) => {
+      const [ax, ay] = pos[a], [bx] = pos[b];
+      const ns = rnd.winnerSlots[i], nx = resolved[ns];
+      pos[ns] = [nx, nextY]; winnerPos[ns] = [nx, nextY];
+      const mergeY = nextY + (ay - nextY) * 0.65;
+      lines.push([ax, ay, ax, mergeY], [bx, ay, bx, mergeY], [ax, mergeY, bx, mergeY], [(ax + bx) / 2, mergeY, nx, nextY]);
+    });
+    if (rnd.bye !== null) {
+      const [ox, oy] = pos[rnd.bye];
+      pos[rnd.bye] = [resolved[rnd.bye], nextY];
+      byePos[ri] = [ox, oy, resolved[rnd.bye], nextY];
+    }
+    curY = nextY;
+  });
+  return { struct, card, pos, lines, winnerPos, byePos, r1 };
+}
+
+function drawCard(ctx, ent, cx, cy, color, size, { dim = false, alpha = 1 } = {}) {
+  const radius = Math.max(2, Math.min(Math.round(size * 0.15), 14));
+  const bw = Math.max(2, Math.min(Math.round(size * 0.065), 6));
+  const x = cx - size / 2, y = cy - size / 2;
+  const db = ent && DB.bySlug[ent.slug];
   ctx.save();
-  UI.roundRect(ctx, x, y, s, s, 8);
-  ctx.clip();
-  if (ent) UI.drawImageCover(ctx, ent.selection, x, y, s, s); else drawRandomTile(ctx, x, y, s);
+  ctx.globalAlpha = alpha;
+  UI.roundRect(ctx, x, y, size, size, radius);
+  ctx.fillStyle = "rgb(35,35,42)"; ctx.fill();
+  ctx.save(); ctx.clip();
+  if (db && db.selection) UI.drawImageCover(ctx, db.selection, x, y, size, size); else drawRandomTile(ctx, x, y, size);
+  ctx.restore();
+  UI.roundRect(ctx, x - bw / 2, y - bw / 2, size + bw, size + bw, radius + bw / 2);
+  ctx.lineWidth = bw; ctx.strokeStyle = color; ctx.stroke();
+  if (dim) { UI.roundRect(ctx, x, y, size, size, radius); ctx.fillStyle = "rgba(0,0,0,0.51)"; ctx.fill(); }
   ctx.restore();
 }
 
-/** Dibuja el bracket a partir de TournamentBracket.state() */
-export function drawBracket(ctx, view, st, { phase = "ready", result = null, t = 0, hint = "" } = {}) {
-  UI.menuBackground(ctx, view, t);
-  UI.title(ctx, view, st.final ? "FINAL" : `RONDA ${st.round}`, 36);
-  UI.text(ctx, `${st.total} luchadores · eliminación directa`, view.w / 2, 66, { size: 14, color: "#aaa" });
-  const cur = st.matches[st.idx];
-  // pelea actual, grande
-  if (cur && phase !== "result") {
-    const cx = view.w / 2;
-    portrait(ctx, cur[0].slug, cx - 230, 90, 110);
-    portrait(ctx, cur[1].slug, cx + 120, 90, 110);
-    UI.text(ctx, cur[0].label, cx - 175, 220, { size: 20 });
-    UI.text(ctx, cur[1].label, cx + 175, 220, { size: 20 });
-    UI.text(ctx, "VS", cx, 145, { size: 54, color: COLORS.red, stroke: 6 });
-  }
-  if (phase === "result" && result) {
-    UI.text(ctx, `¡${result.winner.toUpperCase()} AVANZA!`, view.w / 2, 150, { size: 40, color: COLORS.yellow, stroke: 7 });
-    UI.text(ctx, `${result.loser} queda eliminado`, view.w / 2, 195, { size: 18, color: "#ccc" });
-  }
-  // lista de cruces de la ronda
-  const n = st.matches.length + (st.bye ? 1 : 0);
-  const cols = n > 4 ? 2 : 1;
-  const perCol = Math.ceil(n / cols);
-  const rowH = Math.min(36, (C.BASE_H - 300) / perCol);
-  const colW = 360;
-  const x0 = view.w / 2 - (cols * colW + (cols - 1) * 20) / 2;
-  const rows = st.matches.map((m, i) => ({ m, i }));
-  if (st.bye) rows.push({ bye: st.bye });
-  rows.forEach((r, k) => {
-    const x = x0 + Math.floor(k / perCol) * (colW + 20);
-    const y = 250 + (k % perCol) * rowH;
-    const isCur = r.i === st.idx;
-    UI.roundRect(ctx, x, y, colW, rowH - 6, 8);
-    ctx.fillStyle = isCur ? "rgba(240,200,40,0.18)" : "rgba(255,255,255,0.06)";
-    ctx.fill();
-    if (r.bye) {
-      UI.text(ctx, `${r.bye.label} pasa directo`, x + colW / 2, y + rowH / 2 - 3, { size: 15, color: "#9cf" });
-      return;
+function drawPose(ctx, view, ent, side, yOff) {
+  const db = ent && DB.bySlug[ent.slug];
+  const y = C.BASE_H / 2 - SIDE_PANEL_W / 2 + yOff;
+  const push = 70;
+  if (db) {
+    if (side === "left") drawFlipped(ctx, db.pose, SIDE_MARGIN - push, y, SIDE_PANEL_W, SIDE_PANEL_W, false);
+    else {
+      const x = view.w - SIDE_MARGIN - SIDE_PANEL_W + push;
+      if (db.pose2) drawFlipped(ctx, db.pose2, x, y, SIDE_PANEL_W, SIDE_PANEL_W, false);
+      else drawFlipped(ctx, db.pose, x, y, SIDE_PANEL_W, SIDE_PANEL_W, true);
     }
-    const w = st.results[r.i];
-    const [a, b] = r.m;
-    const colA = w ? (w === a.label ? COLORS.green : "#777") : "#fff";
-    const colB = w ? (w === b.label ? COLORS.green : "#777") : "#fff";
-    UI.text(ctx, a.label, x + colW / 2 - 24, y + rowH / 2 - 3, { size: 15, align: "right", color: colA });
-    UI.text(ctx, "vs", x + colW / 2, y + rowH / 2 - 3, { size: 13, color: COLORS.red });
-    UI.text(ctx, b.label, x + colW / 2 + 24, y + rowH / 2 - 3, { size: 15, align: "left", color: colB });
+  }
+  const left = side === "left";
+  UI.text(ctx, `${left ? "J1" : "J2"}: ${ent.label}`, left ? 40 : view.w - 40, C.BASE_H / 2 + 240,
+    { size: 20, color: left ? P1_COLOR : P2_COLOR, align: left ? "left" : "right", baseline: "top" });
+}
+
+/**
+ * Dibuja el cuadro a partir de TournamentBracket.state().
+ * phase: "ready" | "result";  anim: segundos desde que empezó esa fase;
+ * result: {winner, loser} (labels) en la fase "result".
+ */
+export function drawBracket(ctx, view, st, { phase = "ready", result = null, anim = 99, hint = "" } = {}) {
+  UI.menuBackground(ctx, view, 0, "select", 0);
+  UI.text(ctx, st.final ? "FINAL" : `RONDA ${st.round}`, view.w / 2, 25, { size: 38, color: COLORS.yellow });
+  const L = bracketLayout(st, view);
+  // todos los luchadores, por label
+  const byLabel = {};
+  L.r1.matches.forEach(([a, b]) => { byLabel[a.label] = a; byLabel[b.label] = b; });
+  if (L.r1.bye) byLabel[L.r1.bye.label] = L.r1.bye;
+
+  if (phase === "result" && result) {
+    const cx = view.w / 2, cardY = 320, size = 150, gap = 230;
+    const k = Math.min(1, anim / RESULT_DURATION);
+    const w = byLabel[result.winner], l = byLabel[result.loser];
+    if (w) drawCard(ctx, w, cx, cardY, WIN_GREY, size);
+    if (l) drawCard(ctx, l, cx + gap, cardY + k * 90, GREY, size, { alpha: Math.max(60, 255 - k * 195) / 255 });
+    const r = UI.wrapText(ctx, `${result.winner} avanza`, 28, view.w - 120);
+    r.lines.forEach((ln, i) => UI.text(ctx, ln, cx, cardY + size / 2 + 50 + i * r.size * 1.15, { size: r.size, color: COLORS.yellow }));
+    if (hint) UI.footer(ctx, view, hint, C.BASE_H - 30);
+    return;
+  }
+
+  ctx.save();
+  ctx.strokeStyle = LINE_COLOR; ctx.lineWidth = 2;
+  for (const [x1, y1, x2, y2] of L.lines) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+  ctx.restore();
+
+  // tarjetas (se dibujan después de las poses, para quedar por encima)
+  const cards = [];
+  const slotEnt = {};
+  L.r1.matches.forEach(([a, b], i) => { slotEnt[2 * i] = a; slotEnt[2 * i + 1] = b; });
+  if (L.r1.bye) slotEnt[2 * L.r1.matches.length] = L.r1.bye;
+  const rounds = st.history.map((h) => ({ matches: h.matches, results: h.results, idx: h.matches.length, current: false }));
+  rounds.push({ matches: st.matches, results: st.results, idx: st.idx, current: true });
+  rounds.forEach((rd, ri) => {
+    const s = L.struct[ri];
+    if (!s) return;
+    s.pairs.forEach(([sa, sb], i) => {
+      const a = slotEnt[sa], b = slotEnt[sb];
+      if (!a || !b) return;
+      const [ax, ay] = L.pos[sa], [bx] = L.pos[sb];
+      const decided = i < rd.idx;
+      const active = rd.current && i === rd.idx;
+      const [nx, ny] = L.winnerPos[s.winnerSlots[i]];
+      if (decided) {
+        const wl = rd.results[i];
+        const winner = wl === a.label ? a : b, loser = winner === a ? b : a;
+        cards.push([loser, loser === a ? ax : bx, ay, GREY, true]);
+        cards.push([winner, winner === a ? ax : bx, ay, WIN_GREY, false]);
+        cards.push([winner, nx, ny, WIN_GREY, false]);
+        slotEnt[s.winnerSlots[i]] = winner;
+      } else {
+        cards.push([a, ax, ay, active ? P1_COLOR : GREY, false]);
+        cards.push([b, bx, ay, active ? P2_COLOR : GREY, false]);
+      }
+    });
+    if (s.bye !== null) {
+      const be = slotEnt[s.bye];
+      if (be && L.byePos[ri]) cards.push([be, L.byePos[ri][2], L.byePos[ri][3], BYE_GREY, false]);
+    }
   });
-  if (hint) UI.footer(ctx, view, hint);
+
+  const cur = st.matches[st.idx];
+  if (cur) {
+    const p = Math.min(1, anim / RISE_DURATION);
+    const eased = 1 - (1 - p) ** 3;
+    const off = (1 - eased) * 120;
+    drawPose(ctx, view, cur[0], "left", off);
+    drawPose(ctx, view, cur[1], "right", off);
+  }
+  for (const [e, x, y, col, dim] of cards) drawCard(ctx, e, x, y, col, L.card, { dim });
+  if (hint) UI.footer(ctx, view, hint, C.BASE_H - 30);
 }
 
 // ---------------------------------------------------------------------
@@ -215,10 +352,11 @@ export function startLocalTournament(app, count) {
 
 class BracketScene {
   constructor(app, bracket) {
-    this.app = app; this.bracket = bracket; this.phase = "ready"; this.result = null; this.timer = 0;
+    this.app = app; this.bracket = bracket; this.phase = "ready"; this.result = null; this.timer = 0; this.anim = 0;
   }
   enter() { this.app.touch.fightMode = false; }
   update(dt) {
+    this.anim += dt;
     if (this.phase === "result") {
       this.timer -= dt;
       if (this.timer <= 0 || ok(this.app.anyInput)) this.advance();
@@ -230,6 +368,7 @@ class BracketScene {
     const b = this.bracket;
     const finished = b.reportResult(this.result.winnerEntrant);
     this.phase = "ready";
+    this.anim = 0;
     if (finished) this.app.setScene(new TournamentVictory(this.app, b.champion, b.entrants.length));
   }
   async fight() {
@@ -256,17 +395,19 @@ class BracketScene {
         }
         this.result = { winner: w.label, loser: l.label, winnerEntrant: w };
         this.phase = "result";
-        this.timer = 3;
+        this.timer = RESULT_DURATION;
+        this.anim = 0;
         app.setScene(this);
       },
     }));
   }
   draw(ctx, view) {
+    const touch = this.app.isTouchDevice;
     drawBracket(ctx, view, this.bracket.state(), {
-      phase: this.phase, result: this.result, t: this.app.t,
-      hint: this.phase === "ready" ? "Confirmar: ¡a pelear! (J1 a la izquierda, J2 a la derecha)" : "",
+      phase: this.phase, result: this.result, anim: this.anim,
+      hint: touch ? "" : (this.phase === "ready" ? "ENTER: ¡a pelear!" : "ENTER: continuar"),
     });
-    if (this.phase === "ready") UI.pillButton(ctx, view.w / 2, 232, "¡PELEAR!", () => this.fight(), { size: 16, h: 34, minW: 140 });
+    if (this.phase === "ready" && touch) UI.pillButton(ctx, view.w / 2, C.BASE_H - 34, "¡PELEAR!", () => this.fight(), { size: 18, h: 40, minW: 170 });
     UI.backButton(ctx, () => Flow.mainMenu(this.app), "◄ SALIR");
   }
 }
@@ -276,20 +417,28 @@ export class TournamentVictory {
     this.app = app; this.champion = champion; this.total = total; this.onDone = onDone;
     this.label = label || champion.label;
     this.confetti = new UI.Confetti(app.view);
+    // el campeón festejando con su animación WIN (igual que en PC)
+    this.char = null;
+    const ent = DB.bySlug[champion.slug];
+    if (ent) loadCharacterFrames(champion.slug).then((f) => {
+      const ch = new Character(ent, f);
+      ch.setState(C.S.WIN, true);
+      ch.x = C.BASE_W / 2; ch.y = C.GROUND_Y; ch.facing = 1;
+      this.char = ch;
+    }).catch(() => {});
   }
   enter() { this.app.touch.fightMode = false; }
   update(dt) {
     this.confetti.update(dt);
+    if (this.char) this.char.animations[C.S.WIN].update(dt);
     if (ok(this.app.anyInput)) this.done();
   }
   done() { if (this.onDone) this.onDone(); else Flow.mainMenu(this.app); }
   draw(ctx, view) {
-    UI.menuBackground(ctx, view, 0, "tower", 0.3);
-    const ent = DB.bySlug[this.champion.slug];
-    if (ent) UI.drawImageContain(ctx, ent.pose, view.w / 2 - 140, 130, 280, C.BASE_H - 170);
+    ctx.fillStyle = COLORS.dark; ctx.fillRect(0, 0, view.w, C.BASE_H);
+    if (this.char) this.char.draw(ctx, 0, view.pad);
     this.confetti.draw(ctx);
-    UI.title(ctx, view, `¡${this.label.toUpperCase()} GANA EL TORNEO!`, 60, COLORS.yellow, 36);
-    UI.text(ctx, `Campeón entre ${this.total} luchadores`, view.w / 2, 100, { size: 18 });
+    UI.pcTitle(ctx, view, `¡${this.label.toUpperCase()} GANA\u00a0EL\u00a0TORNEO!`, 60, COLORS.yellow);
     if (this.onDone !== false) UI.pillButton(ctx, view.w / 2, C.BASE_H - 30, "CONTINUAR", () => this.done(), { size: 16, h: 36 });
   }
 }

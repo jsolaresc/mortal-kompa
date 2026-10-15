@@ -18,7 +18,7 @@ import { Character } from "../character.js";
 import { Stage } from "../stage.js";
 import { Match, drawSnapshot } from "../match.js";
 import { CharSelectScene, StageSelectScene } from "./select.js";
-import { TournamentBracket, drawBracket, TournamentVictory } from "./tournament.js";
+import { TournamentBracket, drawBracket, TournamentVictory, RESULT_DURATION } from "./tournament.js";
 import { openHost, openGuest, newRoomCode, inviteLink } from "../net.js";
 import { playMenuMusic } from "./menus.js";
 import { BRIDGE, roomFromText } from "../platform.js";
@@ -145,6 +145,10 @@ class HostSession {
     // sala recuperada: el servidor puede tardar en soltar el código viejo
     this.keepCodeUntil = code ? performance.now() + 90000 : 0;
     this.clients = new Map();
+    // jugadores que ya entraron alguna vez (por su identificador de
+    // aparato): si se les corta y vuelven, recuperan su lugar
+    this.known = new Map();
+    this.lastMode = null;    // última pantalla mandada a los invitados (para los que vuelven)
     this.nextId = 1;
     this.ready = false;
     this.error = null;
@@ -182,7 +186,7 @@ class HostSession {
     conn.send({ t: "welcome", id, ver: GAME_VERSION });
   }
   drop(cl) {
-    if (!this.clients.has(cl.id)) return;
+    if (this.clients.get(cl.id) !== cl) return;
     this.clients.delete(cl.id);
     cl.input.receive(0, cl.input.counts);
     this.app.toast(`${cl.name} se desconectó`);
@@ -192,13 +196,17 @@ class HostSession {
   onMsg(cl, m) {
     if (!m || typeof m !== "object") return;
     switch (m.t) {
-      case "hello":
+      case "hello": {
         cl.name = String(m.name || cl.name).slice(0, 16);
         if (m.ver !== GAME_VERSION) cl.conn.send({ t: "toast", msg: `Ojo: el anfitrión tiene ${GAME_VERSION} y vos ${m.ver}` });
-        this.app.toast(`${cl.name} entró a la sala`);
+        const back = this.reclaim(cl, typeof m.pid === "string" ? m.pid.slice(0, 40) : null);
+        this.app.toast(back ? `${cl.name} volvió a la sala` : `${cl.name} entró a la sala`);
         this.sendLobby();
-        if (this.onJoin) this.onJoin(cl);
+        this.resync(cl);
+        if (back && this.onRejoin) this.onRejoin(cl);
+        if (!back && this.onJoin) this.onJoin(cl);
         break;
+      }
       case "name": cl.name = String(m.name || cl.name).slice(0, 16); this.sendLobby(); break;
       case "in": cl.input.receive(m.m, m.c); break;
       case "pick": cl.pick = { slug: m.slug, random: !!m.random }; if (this.onPick) this.onPick(cl); break;
@@ -207,12 +215,56 @@ class HostSession {
       default: break;
     }
   }
+  // Si este aparato ya había estado en la sala y se le cortó, recupera
+  // su lugar (mismo número de jugador): así sigue en el torneo / pelea.
+  reclaim(cl, pid) {
+    if (!pid) return false;
+    const rec = this.known.get(pid);
+    if (!rec) { this.known.set(pid, { id: cl.id, input: cl.input, cl }); return false; }
+    if (rec.id === cl.id) return false;
+    const old = this.clients.get(rec.id);
+    // el "viejo" sigue vivo: es otra pestaña del mismo aparato, no un regreso
+    if (old && performance.now() - old.lastSeen < 2500) return false;
+    if (old) {
+      this.clients.delete(old.id);
+      old.conn.onClose = null;
+      try { old.conn.close(); } catch (e) { /* nada */ }
+    }
+    this.clients.delete(cl.id);
+    cl.id = rec.id;
+    cl.input = rec.input;               // la pelea en curso sigue leyendo este control
+    cl.pick = rec.cl ? rec.cl.pick : null;
+    if (rec.cl && /^Invitado \d+$/.test(cl.name)) cl.name = rec.cl.name;   // sin nombre propio: el de antes
+    cl.ready = false;
+    rec.cl = cl;
+    this.clients.set(cl.id, cl);
+    cl.conn.send({ t: "welcome", id: cl.id, ver: GAME_VERSION });
+    return true;
+  }
+  // al que entra (o vuelve) en medio de algo, se le manda la pantalla actual
+  resync(cl) {
+    let m = this.lastMode;
+    if (!m) return;
+    if (m.t === "pick" && (cl.pick || !m.who.includes(cl.id))) {
+      m = { t: "wait", msg: cl.pick ? "¡Listo! Esperando a los demás..." : "Están eligiendo luchador..." };
+    }
+    cl.conn.send(m);
+    if (this.pauseMsg) cl.conn.send(this.pauseMsg);
+  }
   players() {
     return [{ id: 0, name: myName(this.app, "Anfitrión") }, ...[...this.clients.values()].map((c) => ({ id: c.id, name: c.name }))];
   }
   nameOf(id) { return id === 0 ? myName(this.app, "Anfitrión") : (this.clients.get(id) || {}).name || "?"; }
   inputOf(id) { if (id === 0) return this.app.inputs[0]; const c = this.clients.get(id); return c ? c.input : IDLE; }
-  broadcast(m) { for (const c of this.clients.values()) c.conn.send(m); }
+  broadcast(m) {
+    if (m.t !== "fs") {
+      if (m.t === "pick" || m.t === "wait" || m.t === "load" || m.t === "bracket" || m.t === "champion") this.lastMode = m;
+      else if (m.t === "lobby" && m.go) this.lastMode = null;
+      if (m.t === "netpause") this.pauseMsg = m;
+      else if (m.t === "netresume" || m.t === "load" || m.t === "bracket" || (m.t === "lobby" && m.go)) this.pauseMsg = null;
+    }
+    for (const c of this.clients.values()) c.conn.send(m);
+  }
   sendLobby() { this.broadcast({ t: "lobby", players: this.players() }); }
   onNameChange() { this.sendLobby(); }
   // cada cuadro (lo llama el loop principal)
@@ -425,20 +477,53 @@ async function netFight(app, { slugs, mystery, owners, stageDef, kind, names = n
   const origPick = scene.pausePick.bind(scene);
   scene.pausePick = (i) => { if (i === 1) { scene.cleanup(); backToLobby(app, "Partida abandonada"); } else origPick(0); };
   net.stream = scene.match;
-  const prevDrop = net.onDrop;
+  // Si se desconecta uno de los que pelean: la pelea queda en pausa
+  // esperando que vuelva (entra de nuevo con el código y sigue donde
+  // estaba). El anfitrión puede no esperarlo más.
+  const label = (k) => (names && names[k]) || net.nameOf(owners[k]);
+  const waitOptions = (w) => (kind === "versus"
+    ? [
+      { label: "Volver a la sala", act: () => { endWait(); playMenuMusic(); backToLobby(app); } },
+      { label: "Volver al menú principal", act: () => { endWait(); scene.cleanup(); if (app.net) app.net.close(); audio.stopAllSfx(); Flow.mainMenu(app); } },
+    ]
+    : [{ label: `Dar la pelea por ganada a ${label(1 - w.idx)}`, act: () => {
+      endWait();
+      scene.overHandled = true;
+      scene.opts.onOver({ winner: 1 - w.idx, stage: scene.match.stage });
+    } }]);
+  const endWait = () => { scene.netWait = null; if (app.net) app.net.broadcast({ t: "netresume" }); };
   net.onDrop = (cl) => {
-    if (owners.includes(cl.id) && kind === "versus") {
-      net.stream = null;
-      if (scene.match && scene.match.stage) scene.match.stage.dispose();
-      app.setScene(new ConnectionLostScene(app, {
-        message: `${cl.name} se desconectó de la pelea`,
-        options: [
-          { label: "Volver a la sala", act: () => { playMenuMusic(); backToLobby(app); } },
-          { label: "Volver al menú principal", act: () => { if (app.net) app.net.close(); audio.stopAllSfx(); Flow.mainMenu(app); } },
-        ],
-      }));
-    }
-    else if (prevDrop && kind !== "versus") prevDrop(cl);
+    const idx = owners.indexOf(cl.id);
+    if (idx < 0 || app.scene !== scene || scene.match.phase === "over" || scene.netWait) return;
+    scene.netWait = { idx, id: cl.id, name: cl.name, index: 0 };
+    audio.stopAllSfx();
+    net.broadcast({ t: "netpause", msg: `${cl.name} se desconectó. Esperando que vuelva...` });
+  };
+  net.onRejoin = (cl) => { if (scene.netWait && cl.id === scene.netWait.id) scene.netWait.back = true; };
+  const baseUpdate = scene.update.bind(scene);
+  scene.update = (dt) => {
+    const w = scene.netWait;
+    if (!w) { baseUpdate(dt); return; }
+    app.touch.fightMode = false;
+    const back = net.clients.get(w.id);
+    if (w.back && back && back.ready) { endWait(); return; }   // volvió y ya cargó: sigue la pelea
+    const opts = waitOptions(w);
+    const inp = app.inputs[0];
+    if (inp.justPressed("up")) w.index = (w.index + opts.length - 1) % opts.length;
+    else if (inp.justPressed("down")) w.index = (w.index + 1) % opts.length;
+    else if (ok(inp)) opts[Math.min(w.index, opts.length - 1)].act();
+  };
+  const baseDraw = scene.draw.bind(scene);
+  scene.draw = (ctx, view) => {
+    baseDraw(ctx, view);
+    const w = scene.netWait;
+    if (!w) return;
+    UI.overlay(ctx, view, 0.7);
+    UI.pcTitle(ctx, view, "PELEA EN PAUSA", 120);
+    UI.text(ctx, `${w.name} se desconectó.`, view.w / 2, 190, { size: 22 });
+    UI.text(ctx, w.back ? "Volvió: cargando la pelea..." : "Esperando que vuelva a entrar con el código de la sala...", view.w / 2, 222, { size: 17, color: "#cfe" });
+    const opts = waitOptions(w);
+    UI.menuList(ctx, view, opts.map((o) => o.label), Math.min(w.index, opts.length - 1), 330, (k) => opts[k].act());
   };
   // tecla de pausa del anfitrión: no pausa el juego, abre "abandonar"
   app.setScene(scene);
@@ -484,7 +569,7 @@ function hostTournament(app) {
 
 class HostBracketScene {
   constructor(app, bracket) {
-    this.app = app; this.bracket = bracket; this.phase = "ready"; this.result = null; this.timer = 0;
+    this.app = app; this.bracket = bracket; this.phase = "ready"; this.result = null; this.timer = 0; this.anim = 0;
   }
   enter() {
     this.app.touch.fightMode = false;
@@ -495,25 +580,34 @@ class HostBracketScene {
   send() {
     this.app.net.broadcast({ t: "bracket", st: this.bracket.state(), phase: this.phase, result: this.result });
   }
+  // ¿falta alguno de los dos de la pelea que sigue? (se desconectó)
+  missing() {
+    const net = this.app.net;
+    const m = this.bracket.currentMatch();
+    if (!net || !m) return null;
+    const miss = m.map((e) => e.owner !== 0 && !net.clients.has(e.owner));
+    if (!miss[0] && !miss[1]) return null;
+    const lost = miss[0] ? 0 : 1;
+    return { lost, name: m[lost].label, winner: 1 - lost, winnerName: m[1 - lost].label };
+  }
+  forfeit() {
+    const ms = this.missing();
+    if (!ms) return;
+    this.app.toast(`${ms.winnerName} gana por abandono`);
+    this.finishMatch(ms.winner);
+  }
   update(dt) {
     const net = this.app.net;
     if (!net) return;
+    this.anim += dt;
     if (this.phase === "result") {
       this.timer -= dt;
       if (this.timer <= 0 || ok(this.app.anyInput)) this.advance();
       return;
     }
-    // si falta alguno de los dos (se desconectó), pierde por abandono
-    const m = this.bracket.currentMatch();
-    if (m) {
-      const missing = m.map((e) => e.owner !== 0 && !net.clients.has(e.owner));
-      if (missing[0] || missing[1]) {
-        const w = missing[0] ? 1 : 0;
-        this.app.toast(`${m[w].label} gana por abandono`);
-        this.finishMatch(w);
-        return;
-      }
-    }
+    // si falta alguno, se lo espera (puede volver a entrar con el código);
+    // el anfitrión decide si le da la pelea por ganada al otro
+    if (this.missing()) { if (ok(this.app.anyInput)) this.forfeit(); return; }
     if (ok(this.app.anyInput)) this.fight();
   }
   finishMatch(w) {
@@ -527,7 +621,8 @@ class HostBracketScene {
     this.result = { winner: m[w].label, loser: m[1 - w].label };
     this.winnerEntrant = m[w];
     this.phase = "result";
-    this.timer = 3.5;
+    this.timer = RESULT_DURATION;
+    this.anim = 0;
     this.app.setScene(this);
     this.send();
   }
@@ -543,6 +638,7 @@ class HostBracketScene {
     const finished = this.bracket.reportResult(this.winnerEntrant);
     this.phase = "ready";
     this.result = null;
+    this.anim = 0;
     if (finished) this.champion();
     else this.send();
   }
@@ -564,14 +660,17 @@ class HostBracketScene {
   }
   draw(ctx, view) {
     const st = this.bracket.state();
-    const m = this.bracket.currentMatch();
+    const touch = this.app.isTouchDevice;
+    const ms = this.phase === "ready" ? this.missing() : null;
     let hint = "";
-    if (this.phase === "ready" && m) {
-      const meIn = m.some((e) => e.owner === 0);
-      hint = meIn ? "Confirmar: ¡a pelear! (vos jugás esta)" : "Confirmar: arrancar la pelea (vos mirás esta)";
+    if (!touch && this.phase === "ready" && !ms) hint = "ENTER: ¡a pelear!";
+    drawBracket(ctx, view, st, { phase: this.phase, result: this.result, anim: this.anim, hint });
+    if (ms) {
+      UI.text(ctx, `Esperando a ${ms.name} (se desconectó)...`, view.w / 2, 70, { size: 17, color: "#fb4" });
+      UI.pillButton(ctx, view.w / 2, C.BASE_H - 34, `Dar la pelea por ganada a ${ms.winnerName}`, () => this.forfeit(), { size: 15, h: 38, minW: 260 });
+    } else if (this.phase === "ready" && touch) {
+      UI.pillButton(ctx, view.w / 2, C.BASE_H - 34, "¡PELEAR!", () => this.fight(), { size: 18, h: 40, minW: 170 });
     }
-    drawBracket(ctx, view, st, { phase: this.phase, result: this.result, t: this.app.t, hint });
-    if (this.phase === "ready") UI.pillButton(ctx, view.w / 2, 232, "¡PELEAR!", () => this.fight(), { size: 16, h: 34, minW: 140 });
     UI.backButton(ctx, () => backToLobby(this.app, "Torneo cancelado"), "◄ A LA SALA");
   }
 }
@@ -579,6 +678,18 @@ class HostBracketScene {
 // =====================================================================
 // INVITADO
 // =====================================================================
+// Identificador de este aparato (queda guardado): si se corta y vuelve a
+// entrar a la misma sala, el anfitrión le devuelve su lugar.
+function devicePid() {
+  const q = new URLSearchParams(location.search).get("pid");   // solo para pruebas
+  if (q) return q;
+  try {
+    let p = localStorage.getItem("mk_pid");
+    if (!p) { p = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); localStorage.setItem("mk_pid", p); }
+    return p;
+  } catch (e) { return null; }
+}
+
 class GuestSession {
   constructor(app, code, { retry = false } = {}) {
     this.app = app;
@@ -603,7 +714,7 @@ class GuestSession {
         this.lastSeen = performance.now();
         conn.onData = (m) => { this.lastSeen = performance.now(); if (this.scene) this.scene.onMsg(m); };
         conn.onClose = () => this.scene && this.scene.onMsg({ t: "closed" });
-        conn.send({ t: "hello", name: myName(app, ""), ver: GAME_VERSION });
+        conn.send({ t: "hello", name: myName(app, ""), ver: GAME_VERSION, pid: devicePid() });
       },
       onError: (e) => {
         if (!this.conn && !this.closed && performance.now() < this.retryUntil) {
@@ -646,7 +757,12 @@ class GuestSession {
 
 export function joinOnlineScene(app, code, opts = {}) {
   // sacar ?sala= de la URL para que "volver al menú" no vuelva a entrar
-  history.replaceState(null, "", location.pathname + (location.search.includes("net=local") ? "?net=local" : ""));
+  {
+    const q = new URLSearchParams(location.search), keep = new URLSearchParams();
+    for (const k of ["net", "pid"]) if (q.get(k)) keep.set(k, q.get(k));
+    const qs = keep.toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
+  }
   app.inviteRoom = null;
   if (app.net && app.net.close) app.net.close();
   const net = new GuestSession(app, code, opts);
@@ -721,6 +837,7 @@ class GuestScene {
         } else { this.mode = "wait"; this.msg = "Están eligiendo luchador..."; }
         break;
       case "load": {
+        this.netMsg = null;
         this.mode = "loading";
         this.sub = null;
         hidePanel();
@@ -743,7 +860,15 @@ class GuestScene {
         for (const ev of m.a || []) audio.applyRemote(ev);
         break;
       case "rematch": this.endShown = false; break;
-      case "bracket": this.mode = "bracket"; this.bracket = m; this.sub = null; this.app.touch.fightMode = false; break;
+      case "netpause": this.netMsg = m.msg; break;
+      case "netresume": this.netMsg = null; break;
+      case "bracket": {
+        const prev = this.bracket;
+        const key = (b) => b && `${b.phase}|${b.st.round}|${b.st.idx}`;
+        if (key(prev) !== key(m)) this.bracketAnim = 0;
+        this.mode = "bracket"; this.bracket = m; this.sub = null; this.netMsg = null; this.app.touch.fightMode = false;
+        break;
+      }
       case "champion":
         this.mode = "champion";
         this.app.touch.fightMode = false;
@@ -759,6 +884,7 @@ class GuestScene {
     if (this.net.error) { const e = this.net.error; this.net.error = null; this.leave(e); return; }
     if (this.sub) { this.sub.update(dt); return; }
     if (this.mode === "champion" && this.victory) this.victory.update(dt);
+    if (this.mode === "bracket") this.bracketAnim = (this.bracketAnim || 0) + dt;
     if (this.mode === "fight" && this.snap) {
       const me = this.owners ? this.owners.indexOf(this.net.myId) : -1;
       if (me >= 0) this.app.touch.specialCharge = this.snap.f[me][8];
@@ -773,13 +899,18 @@ class GuestScene {
       if (this.snap.ph === "over" && this.snap.win !== null && this.snap.win !== undefined) {
         const name = this.snap.f[this.snap.win][9];
         UI.overlay(ctx, view, 140 / 255);
-        UI.pcTitle(ctx, view, `¡${String(name).toUpperCase()} GANA LA PELEA!`, 70);
+        UI.pcTitle(ctx, view, `¡${String(name).toUpperCase()} GANA\u00a0LA\u00a0PELEA!`, 70);
         if (this.kind === "versus") UI.text(ctx, "Esperando al anfitrión...", view.w / 2, C.BASE_H / 2 + 60, { size: 20 });
+      }
+      if (this.netMsg) {
+        UI.overlay(ctx, view, 0.7);
+        UI.pcTitle(ctx, view, "PELEA EN PAUSA", 120);
+        UI.text(ctx, this.netMsg, view.w / 2, 200, { size: 20 });
       }
       return;
     }
     if (this.mode === "bracket" && this.bracket) {
-      drawBracket(ctx, view, this.bracket.st, { phase: this.bracket.phase, result: this.bracket.result, t: this.app.t, hint: "El anfitrión arranca cada pelea" });
+      drawBracket(ctx, view, this.bracket.st, { phase: this.bracket.phase, result: this.bracket.result, anim: this.bracketAnim || 0, hint: "El anfitrión arranca cada pelea" });
       return;
     }
     if (this.mode === "champion" && this.victory) { this.victory.draw(ctx, view); return; }

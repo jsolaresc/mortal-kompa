@@ -208,7 +208,7 @@ export class FightScene {
     const m = this.match;
     if (m.phase === "over") {
       const w = m.f[m.winner];
-      const txt = `¡${w.name.toUpperCase()} GANA LA PELEA!`;
+      const txt = `¡${w.name.toUpperCase()} GANA\u00a0LA\u00a0PELEA!`;
       if (this.showEnd) {
         // revancha: cuadro congelado + velo + título arriba + menú (igual que en PC)
         UI.overlay(ctx, view, 140 / 255);
