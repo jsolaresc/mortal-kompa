@@ -60,8 +60,19 @@ function keyActive(code) { return keysDown.has(code) || keyEdges.has(code); }
 export const gamepads = { list: [], lastUsed: 0, onChange: null };
 const padEdge = new Map(); // index -> Set(botones apretados desde el último poll)
 
+// App de Google TV: Android lee los joysticks y los pasa acá (mismo
+// formato "standard" que la Gamepad API: 17 botones + stick izquierdo)
+const nativePads = [];
+window.__mkPad = (slot, bits, ax, ay) => {
+  if (bits < 0) { nativePads[slot] = null; return; }
+  const buttons = [];
+  for (let k = 0; k < 17; k++) { const p = !!(bits & (1 << k)); buttons.push({ pressed: p, value: p ? 1 : 0 }); }
+  nativePads[slot] = { id: `android-${slot}`, index: slot, connected: true, mapping: "standard", buttons, axes: [ax || 0, ay || 0, 0, 0] };
+};
+
 export function pollGamepads() {
-  const raw = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+  const nat = nativePads.filter(Boolean);
+  const raw = nat.length ? nat : navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
   const list = raw.filter((g) => g && g.connected);
   const changed = list.length !== gamepads.list.length;
   gamepads.list = list;

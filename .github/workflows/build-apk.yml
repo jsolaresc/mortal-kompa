@@ -5,6 +5,8 @@
 #   - MortalKompa_v1_03_NN.apk (con la versión 1.3.NN en el nombre: lo bajan
 #                                los botones INSTALAR y ACTUALIZAR)
 #   - MortalKompa.apk           (nombre fijo, de respaldo)
+#   - MortalKompaTV_v1_03_NN.apk / MortalKompaTV.apk: la versión para Google TV
+#     (otra app: aparece en el inicio de la tele y se juega con joysticks)
 name: Build APK
 
 on:
@@ -58,8 +60,12 @@ jobs:
           mkdir -p out
           VER=$(printf "v1_03_%02d" ${{ github.run_number }})
           echo "APK_NAME=MortalKompa_${VER}.apk" >> "$GITHUB_ENV"
-          cp android_app/app/build/outputs/apk/release/app-release.apk "out/MortalKompa_${VER}.apk"
-          cp android_app/app/build/outputs/apk/release/app-release.apk out/MortalKompa.apk
+          PHONE=android_app/app/build/outputs/apk/phone/release/app-phone-release.apk
+          TV=android_app/app/build/outputs/apk/tv/release/app-tv-release.apk
+          cp "$PHONE" "out/MortalKompa_${VER}.apk"
+          cp "$PHONE" out/MortalKompa.apk
+          cp "$TV" "out/MortalKompaTV_${VER}.apk"
+          cp "$TV" out/MortalKompaTV.apk
           ls -la out
 
       - uses: actions/upload-artifact@v4
@@ -73,10 +79,12 @@ jobs:
           tag_name: app-${{ github.run_number }}
           name: Mortal Kompa Android 1.3.${{ github.run_number }}
           make_latest: true
-          body: "Instalar en el celular: bajar ${{ env.APK_NAME }} y abrirlo (permitir instalar apps de origen desconocido). Se instala encima de la versión anterior. Desde la app: botón ACTUALIZAR del menú principal."
+          body: "Instalar en el celular: bajar ${{ env.APK_NAME }} y abrirlo (permitir instalar apps de origen desconocido). Se instala encima de la versión anterior. Desde la app: botón ACTUALIZAR del menú principal. Google TV: MortalKompaTV."
           files: |
             out/${{ env.APK_NAME }}
             out/MortalKompa.apk
+            out/MortalKompaTV_v*.apk
+            out/MortalKompaTV.apk
 
       - name: Subir final del log a la rama build-logs (si falló)
         if: failure()

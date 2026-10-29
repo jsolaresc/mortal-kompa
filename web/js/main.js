@@ -9,6 +9,7 @@ import { TouchControls, IS_TOUCH_DEVICE } from "./touch.js";
 import * as UI from "./ui.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { tickMenuVoices } from "./scenes/menus.js";
+import { IS_TV } from "./platform.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -22,7 +23,7 @@ export const app = {
   toastText: "", toastUntil: 0,
   touch: new TouchControls(),
   inputs: [],
-  isTouchDevice: IS_TOUCH_DEVICE,
+  isTouchDevice: IS_TOUCH_DEVICE && !IS_TV,
   inviteRoom: (new URLSearchParams(location.search).get("sala") || "").trim().toLowerCase() || null,
   lastTouchAt: 0,
 };

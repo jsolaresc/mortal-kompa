@@ -31,6 +31,19 @@ android {
         }
     }
 
+    // dos APK con el mismo juego: "phone" (el de siempre, sin cambios) y
+    // "tv" (Google TV: aparece en el inicio de la tele, sin pantalla táctil,
+    // joysticks leídos directo por Android). Son apps distintas (otro
+    // paquete), así que se pueden tener las dos instaladas.
+    flavorDimensions = ["device"]
+    productFlavors {
+        phone { dimension "device" }
+        tv {
+            dimension "device"
+            applicationIdSuffix ".tv"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false

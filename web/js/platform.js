@@ -9,6 +9,8 @@
 
 export const BRIDGE = typeof window !== "undefined" ? window.MKAndroid || null : null;
 export const IS_APP = !!BRIDGE;
+// versión para Google TV (otro APK, misma web adentro)
+export const IS_TV = !!(BRIDGE && BRIDGE.flavor && BRIDGE.flavor() === "tv");
 
 // Dirección pública del juego (para los links de invitación: desde la app
 // tienen que apuntar a la página, no a los archivos internos del APK)
@@ -58,8 +60,11 @@ export async function latestApk() {
   const j = await r.json();
   const build = parseInt(String(j.tag_name || "").replace(/\D/g, ""), 10) || 0;
   const assets = j.assets || [];
-  const a = assets.find((x) => /^MortalKompa_v[\d_]+\.apk$/i.test(x.name)) || assets.find((x) => /\.apk$/i.test(x.name));
-  return { build, version: `1.3.${build}`, url: a ? a.browser_download_url : APK_URL, name: a ? a.name : "MortalKompa.apk" };
+  // la app de Google TV se actualiza con su propio APK (MortalKompaTV_v...)
+  const rx = IS_TV ? /^MortalKompaTV_v[\d_]+\.apk$/i : /^MortalKompa_v[\d_]+\.apk$/i;
+  const fixed = IS_TV ? "MortalKompaTV.apk" : "MortalKompa.apk";
+  const a = assets.find((x) => rx.test(x.name)) || assets.find((x) => x.name === fixed);
+  return { build, version: `1.3.${build}`, url: a ? a.browser_download_url : APK_URL.replace("MortalKompa.apk", fixed), name: a ? a.name : fixed };
 }
 
 // número de compilación de esta app ("V.1.3.22" -> 22; en la web no hay)

@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
     private static final String HOST = "appassets.androidplatform.net";
     private static final String START = "https://" + HOST + "/assets/web/index.html";
 
-    private WebView web;
+    protected WebView web;
     private long updateId = -1;
     private BroadcastReceiver updateReceiver;
     private String updateUrl = "";
@@ -91,6 +91,9 @@ public class MainActivity extends Activity {
 
         web.loadUrl(startUrl(getIntent()));
     }
+
+    /** "phone" en el APK normal; la versión de Google TV (TvActivity) dice "tv". */
+    protected String appFlavor() { return "phone"; }
 
     /** Si la app se abrió con un link de invitación, entra directo a esa sala. */
     private String startUrl(Intent intent) {
@@ -249,6 +252,9 @@ public class MainActivity extends Activity {
         public void update(String url, String name) {
             runOnUiThread(() -> startUpdate(url, name));
         }
+
+        @JavascriptInterface
+        public String flavor() { return appFlavor(); }
 
         @JavascriptInterface
         public void exit() {
