@@ -1,8 +1,7 @@
 // =====================================================================
 // scenes/intro.js — Video de intro al abrir el juego (como en la PC).
-// Solo en las apps (celular y Google TV): ahí el video puede arrancar con
-// sonido sin que antes haya que tocar la pantalla. Cualquier botón, tecla
-// o toque la saltea.
+// Solo en la app de Google TV (el video va únicamente en ese APK): ahí
+// puede arrancar con sonido sin tocar nada. Cualquier botón la saltea.
 // =====================================================================
 import * as C from "../config.js";
 import { audio } from "../audio.js";

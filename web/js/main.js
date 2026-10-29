@@ -9,7 +9,7 @@ import { TouchControls, IS_TOUCH_DEVICE } from "./touch.js";
 import * as UI from "./ui.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { tickMenuVoices } from "./scenes/menus.js";
-import { IS_TV, IS_APP } from "./platform.js";
+import { IS_TV } from "./platform.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -254,8 +254,9 @@ async function boot() {
   // navegadores no dejan antes): ver audio.unlock().
   const Flow = await import("./flow.js");
   if (app.inviteRoom) Flow.joinOnline(app, app.inviteRoom);
-  else if (IS_APP) {
-    // apps (celular / Google TV): primero la intro en video, como en la PC
+  else if (IS_TV) {
+    // Google TV: primero la intro en video, como en la PC (el video viene
+    // solo adentro del APK de TV: android_app/app/src/tv/assets/)
     const { IntroScene } = await import("./scenes/intro.js");
     app.setScene(new IntroScene(app, () => Flow.mainMenu(app)));
   } else Flow.mainMenu(app);
