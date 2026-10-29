@@ -9,7 +9,7 @@ import { TouchControls, IS_TOUCH_DEVICE } from "./touch.js";
 import * as UI from "./ui.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { tickMenuVoices } from "./scenes/menus.js";
-import { IS_TV } from "./platform.js";
+import { IS_TV, IS_APP } from "./platform.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -69,7 +69,10 @@ app.touchVisible = () => {
 const stage = document.getElementById("stage");
 function resize() {
   const W = window.innerWidth, H = window.innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // en la tele: el lienzo siempre dibuja a 1080 líneas como mínimo
+  const dpr = IS_TV
+    ? Math.max(window.devicePixelRatio || 1, 1080 / Math.max(1, Math.min(W, H)))
+    : Math.min(window.devicePixelRatio || 1, 2);
   const v = app.view;
   const rotated = app.isTouchDevice && H > W;
   const LW = rotated ? H : W, LH = rotated ? W : H;   // pantalla "acostada"
@@ -251,7 +254,11 @@ async function boot() {
   // navegadores no dejan antes): ver audio.unlock().
   const Flow = await import("./flow.js");
   if (app.inviteRoom) Flow.joinOnline(app, app.inviteRoom);
-  else Flow.mainMenu(app);
+  else if (IS_APP) {
+    // apps (celular / Google TV): primero la intro en video, como en la PC
+    const { IntroScene } = await import("./scenes/intro.js");
+    app.setScene(new IntroScene(app, () => Flow.mainMenu(app)));
+  } else Flow.mainMenu(app);
   requestAnimationFrame(frame);
 }
 

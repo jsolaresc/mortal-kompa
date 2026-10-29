@@ -11,7 +11,8 @@ import { DB, loadCharacterFrames, randomStage, secretStage } from "./assets.js";
 import { CPUInput, ok, escJustPressed } from "./input.js";
 import { Stage } from "./stage.js";
 import { Match } from "./match.js";
-import { ListMenu, DifficultyScene, OptionsScene, TournamentSizeScene, playMenuMusic } from "./scenes/menus.js";
+import { ListMenu, DifficultyScene, OptionsScene, TournamentSizeScene, playMenuMusic, checkUpdate } from "./scenes/menus.js";
+import { IS_TV } from "./platform.js";
 import { CharSelectScene, StageSelectScene } from "./scenes/select.js";
 import { startTower } from "./scenes/tower.js";
 import { startLocalTournament } from "./scenes/tournament.js";
@@ -27,6 +28,7 @@ export function mainMenu(app, index = 0) {
       { label: "1 Jugador", action: () => onePlayerMenu(app) },
       { label: "Multijugador", action: () => multiplayerMenu(app) },
       { label: "Opciones", action: () => app.setScene(new OptionsScene(app, { onBack: () => mainMenu(app, 2) })) },
+      ...(IS_TV ? [{ label: "Actualizar", action: () => checkUpdate(app) }] : []),
     ],
   }));
 }

@@ -8,7 +8,7 @@ import { audio } from "../audio.js";
 import { DB } from "../assets.js";
 import { ok, DEFAULT_KEYS, prettyKey, keyboard, keyLabel, PAD_LABELS, gamepads } from "../input.js";
 import * as Flow from "../flow.js";
-import { canOfferInstall, IS_IOS, APK_URL, IS_APP, BRIDGE, isStandalone, latestApk, appBuild } from "../platform.js";
+import { canOfferInstall, IS_IOS, APK_URL, IS_APP, IS_TV, BRIDGE, isStandalone, latestApk, appBuild } from "../platform.js";
 
 // Como en la versión de PC: los temas de menú NO se repiten en loop;
 // cuando termina uno arranca otro al azar (distinto del anterior).
@@ -88,7 +88,9 @@ export class ListMenu {
     fullscreenButton(this.app, ctx, view);
     if (this.showLogo) {
       installButton(this.app, ctx, view);
-      UI.text(ctx, GAME_VERSION, 46, C.BASE_H - 18, { size: 14, align: "left", color: "#aaa" });   // versión abajo a la izquierda, como en PC
+      // en la tele, además, la resolución real a la que se dibuja (para revisar que sea 1080p)
+      const res = IS_TV ? `  ·  ${this.app.canvas.width}×${this.app.canvas.height} (${window.innerWidth}×${window.innerHeight} ×${(window.devicePixelRatio || 1).toFixed(2)})` : "";
+      UI.text(ctx, GAME_VERSION + res, 46, C.BASE_H - 18, { size: 14, align: "left", color: "#aaa" });   // versión abajo a la izquierda, como en PC
     }
     UI.footer(ctx, view, this.footerText ?? footerHelp(this.app, !!this.onBack));
   }
@@ -98,6 +100,7 @@ let updateBusy = false;
 export function installButton(app, ctx, view) {
   // en la app: buscar y bajar la versión nueva
   if (IS_APP) {
+    if (IS_TV) return;   // en la tele es una opción más del menú principal
     UI.pillButton(ctx, view.w - 110, 76, "⟳ ACTUALIZAR", () => checkUpdate(app), { size: 13, h: 32, minW: 190, color: "#3c78c8" });
     return;
   }
@@ -111,7 +114,7 @@ export function installButton(app, ctx, view) {
   }, { size: 13, h: 32, minW: 190, color: "#3ca05a" });
 }
 
-async function checkUpdate(app) {
+export async function checkUpdate(app) {
   if (updateBusy) return;
   updateBusy = true;
   app.toast("Buscando actualizaciones...", 2);
@@ -132,12 +135,14 @@ async function checkUpdate(app) {
 }
 
 export function fullscreenButton(app, ctx, view) {
-  if (!document.fullscreenEnabled || document.fullscreenElement) return;
+  if (IS_APP || !document.fullscreenEnabled || document.fullscreenElement) return;   // la app ya es pantalla completa
   UI.pillButton(ctx, view.w - 110, 36, "⛶ PANTALLA COMPLETA", () => app.enterFullscreen(), { size: 13, h: 32, minW: 190, color: "#3c3c48" });
 }
 
 export function footerHelp(app, back = true) {
   if (app.touchVisible() || (app.isTouchDevice && !gamepads.list.length)) return "";
+  // tele sin joystick: control remoto
+  if (IS_TV && !(gamepads.list.length && gamepads.lastUsed > keyboard.lastUsed)) return back ? "▲▼ elegir   ·   OK confirmar   ·   ATRÁS volver" : "▲▼ elegir   ·   OK confirmar";
   if (gamepads.list.length && gamepads.lastUsed > keyboard.lastUsed) return back ? "[dpad] elegir    [cross] confirmar    [circle] volver" : "[dpad] elegir    [cross] confirmar";
   const s = app.settings;
   const parts = [`▲▼ elegir`, `${keyLabel(s, "confirm")} / ENTER confirmar`];
