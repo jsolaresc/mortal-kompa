@@ -5,6 +5,7 @@
 // =====================================================================
 import * as C from "./config.js";
 import { loadImage, url } from "./assets.js";
+import { IS_TV } from "./platform.js";
 
 const MAX_WORLD_W_MULT = 3;
 
@@ -55,6 +56,7 @@ export class Stage {
   }
 
   dispose() {
+    this.pre = null;
     if (this.media && this.media.tagName === "VIDEO") { this.media.pause(); this.media.src = ""; }
   }
 
@@ -69,6 +71,23 @@ export class Stage {
     }
     const kx = this.srcW / this.worldW;
     const ky = this.srcH / C.BASE_H;
+    if (IS_TV && m.tagName !== "VIDEO" && this.worldW >= viewW) {
+      // en la tele (aparatos lentos): la foto del escenario se achica UNA
+      // vez al tamaño exacto de la pantalla y después solo se copia
+      const s = ctx.getTransform().a;
+      if (!this.pre || this.preScale !== s) {
+        const c = document.createElement("canvas");
+        c.width = Math.round(this.worldW * s); c.height = Math.round(C.BASE_H * s);
+        const g = c.getContext("2d");
+        g.imageSmoothingQuality = "high";
+        g.drawImage(m, 0, 0, c.width, c.height);
+        this.pre = c; this.preScale = s;
+      }
+      const left = Math.max(0, Math.min(this.worldW - viewW, cameraX - viewPad));
+      const px = this.pre.width / this.worldW;
+      ctx.drawImage(this.pre, Math.round(left * px), 0, Math.round(viewW * px), this.pre.height, 0, 0, viewW, C.BASE_H);
+      return;
+    }
     if (this.worldW >= viewW) {
       // sin deformar: ventana de viewW px dentro del mundo
       const left = Math.max(0, Math.min(this.worldW - viewW, cameraX - viewPad));

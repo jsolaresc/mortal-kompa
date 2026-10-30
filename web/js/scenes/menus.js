@@ -320,7 +320,16 @@ export class OptionsScene extends RowsScene {
       { label: `Pantalla completa: ${(IS_APP || isStandalone() || document.fullscreenElement) ? "Sí" : "No"}`, act: () => { if (!IS_APP && !isStandalone()) this.app.toggleFullscreen(); },
         disabled: !document.fullscreenEnabled && !document.fullscreenElement },
       { label: "Controles", act: () => this.app.setScene(new ControlOptionsScene(this.app, { onBack: () => this.app.setScene(this) })) },
+      ...(IS_TV ? [this.tvResRow()] : []),
     ];
+  }
+  // solo en la tele: resolución a la que se dibuja el juego
+  tvResRow() {
+    const modes = ["auto", "1080", "720", "540"];
+    const cur = modes.includes(this.app.settings.tvRes) ? this.app.settings.tvRes : "auto";
+    const name = cur === "auto" ? `Automática (${this.app.tvLines()}p)` : `${cur}p`;
+    const step = (d) => this.app.setTvRes(modes[(modes.indexOf(cur) + (d > 0 ? 1 : modes.length - 1)) % modes.length]);
+    return { label: `Resolución: ${name}`, adj: step };
   }
 }
 

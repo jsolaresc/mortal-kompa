@@ -67,11 +67,49 @@ app.touchVisible = () => {
 // En Android, además, al entrar a pantalla completa se traba la pantalla
 // en horizontal (ver enterFullscreen).
 const stage = document.getElementById("stage");
+// Google TV: calidad automática. Arranca en 1080p y, si el aparato no llega
+// a mover el juego fluido (ej. Chromecast HD), baja a 720p y después a 540p.
+// Lo que elige queda guardado para la próxima vez.
+const TV_LINES = [1080, 720, 540];
+// (en Opciones se puede fijar a mano: app.settings.tvRes = "1080"/"720"/"540")
+const tvManual = () => ["1080", "720", "540"].includes(app.settings.tvRes);
+const tvStartLevel = () => (tvManual() ? TV_LINES.indexOf(+app.settings.tvRes)
+  : Math.max(0, Math.min(TV_LINES.length - 1, app.settings.tvQuality | 0)));
+let tvLevel = tvStartLevel();
+const tvGov = { t0: 0, frames: 0, warm: 0 };
+function tvGovernor(now, busy) {
+  if (!IS_TV || tvManual() || tvLevel >= TV_LINES.length - 1) return;
+  if (!busy) { tvGov.t0 = 0; return; }           // se mide solo en peleas
+  if (!tvGov.t0) { tvGov.t0 = now; tvGov.frames = 0; return; }
+  tvGov.frames++;
+  const el = now - tvGov.t0;
+  if (el < 2500) return;
+  const fps = tvGov.frames * 1000 / el;
+  tvGov.t0 = 0;
+  if (tvGov.warm++ < 1) return;                    // la primera medición (carga) no cuenta
+  if (fps < 48) {
+    tvLevel++;
+    app.settings.tvQuality = tvLevel;
+    saveSettings(app.settings);
+    tvGov.warm = 0;
+    resize();
+  }
+}
+app.tvLines = () => (IS_TV ? TV_LINES[tvLevel] : null);
+app.setTvRes = (mode) => {   // "auto" | "1080" | "720" | "540"
+  app.settings.tvRes = mode;
+  if (mode === "auto") app.settings.tvQuality = 0;   // vuelve a probar desde 1080p
+  saveSettings(app.settings);
+  tvLevel = tvStartLevel();
+  tvGov.t0 = 0; tvGov.warm = 0;
+  resize();
+};
 function resize() {
   const W = window.innerWidth, H = window.innerHeight;
-  // en la tele: el lienzo siempre dibuja a 1080 líneas como mínimo
+  // en la tele: se dibuja a 1080, 720 o 540 líneas según lo que aguante
+  // el aparato (calidad automática, ver tvGovernor)
   const dpr = IS_TV
-    ? Math.max(window.devicePixelRatio || 1, 1080 / Math.max(1, Math.min(W, H)))
+    ? TV_LINES[tvLevel] / Math.max(1, Math.min(W, H))
     : Math.min(window.devicePixelRatio || 1, 2);
   const v = app.view;
   const rotated = app.isTouchDevice && H > W;
@@ -200,13 +238,14 @@ function frame(now) {
   }
   if (steps === 5) acc = 0;
   draw();
+  tvGovernor(now, !!(app.scene && (app.scene.match || app.scene.mode === "fight")));
 }
 
 function draw() {
   const v = app.view;
   ctx.setTransform(v.scale, 0, 0, v.scale, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
+  ctx.imageSmoothingQuality = IS_TV ? "low" : "high";   // en la tele, más liviano
   UI.clearHits();
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, v.w, v.fullH);
