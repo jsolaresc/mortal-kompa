@@ -303,13 +303,15 @@ async function boot() {
 }
 
 window.__app = app; // para pruebas desde la consola
+// la app de la tele avisa cuando pasa a segundo plano / vuelve
+window.__mkPause = (p) => { if (p) audio.suspendAll(); else audio.resumeAll(); };
 
 // App Android: el botón "atrás" del celular hace de ESC; en la pantalla de
 // inicio / menú principal cierra la app.
 window.__androidBack = () => {
   const sc = app.scene;
   const atRoot = sc && sc.constructor.name === "ListMenu" && !sc.onBack;
-  if (atRoot && window.MKAndroid) { window.MKAndroid.exit(); return; }
+  if (atRoot && window.MKAndroid) { audio.suspendAll(); window.MKAndroid.exit(); return; }
   for (const type of ["keydown", "keyup"]) {
     window.dispatchEvent(new KeyboardEvent(type, { key: "Escape", code: "Escape", bubbles: true }));
   }

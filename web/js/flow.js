@@ -28,7 +28,10 @@ export function mainMenu(app, index = 0) {
       { label: "1 Jugador", action: () => onePlayerMenu(app) },
       { label: "Multijugador", action: () => multiplayerMenu(app) },
       { label: "Opciones", action: () => app.setScene(new OptionsScene(app, { onBack: () => mainMenu(app, 2) })) },
-      ...(IS_TV ? [{ label: "Actualizar", action: () => checkUpdate(app) }] : []),
+      ...(IS_TV ? [
+        { label: "Actualizar", action: () => checkUpdate(app) },
+        { label: "Cerrar", action: () => { audio.suspendAll(); if (window.MKAndroid) window.MKAndroid.exit(); } },
+      ] : []),
     ],
   }));
 }

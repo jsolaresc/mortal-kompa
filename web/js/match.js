@@ -57,6 +57,7 @@ export class Match {
 
   newFighters() {
     this.f = [0, 1].map((i) => new Character(this.entries[i], this.frames[i]));
+    for (const ch of this.f) for (const list of Object.values(ch.soundPools || {})) for (const p of list) audio.load(p);
     const [a, b] = this.f;
     const worldW = this.stage ? this.stage.worldW : C.BASE_W;
     const center = worldW / 2;

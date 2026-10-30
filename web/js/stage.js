@@ -6,6 +6,7 @@
 import * as C from "./config.js";
 import { loadImage, url } from "./assets.js";
 import { IS_TV } from "./platform.js";
+import { audio } from "./audio.js";
 
 const MAX_WORLD_W_MULT = 3;
 
@@ -18,6 +19,7 @@ export class Stage {
       v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
       v.setAttribute("playsinline", "");
       v.src = url(def.image);
+      audio.videos.add(v);
       await new Promise((res) => {
         v.addEventListener("loadeddata", res, { once: true });
         v.addEventListener("error", res, { once: true });
@@ -57,7 +59,7 @@ export class Stage {
 
   dispose() {
     this.pre = null;
-    if (this.media && this.media.tagName === "VIDEO") { this.media.pause(); this.media.src = ""; }
+    if (this.media && this.media.tagName === "VIDEO") { this.media.pause(); this.media.src = ""; audio.videos.delete(this.media); }
   }
 
   draw(ctx, cameraX, viewPad, viewW) {

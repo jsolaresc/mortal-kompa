@@ -23,6 +23,7 @@ export class IntroScene {
     v.onended = () => this.finish();
     v.onerror = () => this.finish();          // sin video: directo al menú
     this.video = v;
+    audio.videos.add(v);
   }
   enter() {
     this.app.touch.fightMode = false;
@@ -33,6 +34,7 @@ export class IntroScene {
   }
   exit() {
     clearTimeout(this.startTimer);
+    audio.videos.delete(this.video);
     try { this.video.pause(); this.video.removeAttribute("src"); this.video.load(); } catch (e) { /* nada */ }
   }
   finish() {

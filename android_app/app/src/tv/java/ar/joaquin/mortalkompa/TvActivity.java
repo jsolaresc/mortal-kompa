@@ -40,6 +40,32 @@ public class TvActivity extends MainActivity implements InputManager.InputDevice
     protected void onDestroy() {
         if (im != null) im.unregisterInputDeviceListener(this);
         super.onDestroy();
+        // que no quede nada sonando
+        if (web != null) {
+            try { web.loadUrl("about:blank"); web.destroy(); } catch (Exception e) { /* nada */ }
+            web = null;
+        }
+    }
+
+    // botón Inicio de la tele / otra app adelante: se corta la música
+    @Override
+    protected void onPause() {
+        if (web != null) web.evaluateJavascript("window.__mkPause&&window.__mkPause(true)", null);
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (web != null) web.evaluateJavascript("window.__mkPause&&window.__mkPause(false)", null);
+    }
+
+    // "Cerrar" del menú o Atrás en el menú principal: cierra del todo
+    // (también se saca de las apps recientes)
+    @Override
+    public void finish() {
+        if (web != null) web.evaluateJavascript("window.__mkPause&&window.__mkPause(true)", null);
+        finishAndRemoveTask();
     }
 
     private static boolean isPad(int source) {

@@ -42,6 +42,7 @@ class AudioManager {
     this.musicBaseVolume = 0.5;
     this.listeners = [];          // para replicar sonidos por red
     this.muted = false;           // invitado online: no reproducir eventos propios del motor
+    this.videos = new Set();      // videos en uso (intro, escenarios): se pausan con la app
   }
 
   setVolumes(v) {
@@ -193,6 +194,18 @@ class AudioManager {
 
   isMusicPlaying() { return !!this.musicPath && !this.music.paused && !this.music.ended; }
   pauseMusic() { this.music.pause(); }
+  // la app pasa a segundo plano (botón Inicio de la tele) o se cierra
+  suspendAll() {
+    this.wasPlaying = !!(this.musicPath && !this.music.paused);
+    this.music.pause();
+    if (this.ctx && this.ctx.state === "running") this.ctx.suspend();
+    for (const v of this.videos) if (!v.paused) { v.dataset.mkResume = "1"; v.pause(); }
+  }
+  resumeAll() {
+    if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+    if (this.wasPlaying) this.music.play().catch(() => {});
+    for (const v of this.videos) if (v.dataset.mkResume) { delete v.dataset.mkResume; v.play().catch(() => {}); }
+  }
   resumeMusic() { if (this.musicPath) this.music.play().catch(() => {}); }
 
   // Reproduce un evento recibido del anfitrión (online)
