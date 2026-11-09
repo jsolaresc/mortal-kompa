@@ -7,6 +7,7 @@
 // online el anfitrión "grabe" los sonidos y los mande a los invitados.
 // =====================================================================
 import { url } from "./assets.js";
+import { IS_TV } from "./platform.js";
 
 const SFX_DIR = "assets/sounds/sfx";
 const ANNOUNCER_DIR = "assets/sounds/announcer";
@@ -59,7 +60,11 @@ class AudioManager {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
-      this.ctx = new AC();
+      // En la tele (aparatos lentos) se usa un búfer de audio más grande: con
+      // el chico, mientras se dibuja la pelea el sonido se entrecorta y la
+      // voz del locutor suena "saturada". Unos ms de demora no se notan.
+      try { this.ctx = IS_TV ? new AC({ latencyHint: "playback" }) : new AC(); }
+      catch (e) { this.ctx = new AC(); }
       this.master = this.ctx.createGain();
       this.master.connect(this.ctx.destination);
       this.preload();
@@ -111,6 +116,12 @@ class AudioManager {
   }
 
   _start(buf, volume, category, loop = false) {
+    // la misma frase del locutor dos veces casi juntas suena "con eco": una sola
+    if (category === "announcer") {
+      const now = performance.now();
+      if (this._lastAnn === buf && now - this._lastAnnT < 300) return null;
+      this._lastAnn = buf; this._lastAnnT = now;
+    }
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.loop = loop;
