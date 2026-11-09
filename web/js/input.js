@@ -64,6 +64,7 @@ const padEdge = new Map(); // index -> Set(botones apretados desde el último po
 // formato "standard" que la Gamepad API: 17 botones + stick izquierdo)
 const nativePads = [];
 window.__mkPad = (slot, bits, ax, ay) => {
+  if (bits > 0 && window.__mkUnlockAudio) window.__mkUnlockAudio();
   if (bits < 0) { nativePads[slot] = null; return; }
   const buttons = [];
   for (let k = 0; k < 17; k++) { const p = !!(bits & (1 << k)); buttons.push({ pressed: p, value: p ? 1 : 0 }); }

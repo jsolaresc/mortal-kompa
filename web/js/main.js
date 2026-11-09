@@ -9,7 +9,7 @@ import { TouchControls, IS_TOUCH_DEVICE } from "./touch.js";
 import * as UI from "./ui.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { tickMenuVoices } from "./scenes/menus.js";
-import { IS_TV } from "./platform.js";
+import { IS_TV, IS_APP } from "./platform.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -304,6 +304,7 @@ async function boot() {
 
 window.__app = app; // para pruebas desde la consola
 // la app de la tele avisa cuando pasa a segundo plano / vuelve
+window.__mkUnlockAudio = () => { if (!audio.ctx || audio.ctx.state !== "running") audio.unlock(); };
 window.__mkPause = (p) => { if (p) audio.suspendAll(); else audio.resumeAll(); };
 
 // App Android: el botón "atrás" del celular hace de ESC; en la pantalla de
@@ -317,4 +318,8 @@ window.__androidBack = () => {
   }
 };
 keyboard.listeners.push(() => audio.unlock());
+// En las apps (celular / Google TV) el sonido puede arrancar sin tocar
+// nada: si no, jugando solo con joystick nunca se activaban los efectos
+// ni el locutor (la música va por otro lado y sí sonaba).
+if (IS_APP) audio.unlock();
 boot();
