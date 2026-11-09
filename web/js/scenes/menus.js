@@ -32,10 +32,10 @@ audio.onMusicEnded = (path) => {
   audio.musicCategory = "menu";
 };
 
-// Vocecitas random de menú (assets/sounds/menu_voices): cada 25 s hay
-// 15% de chance de que suene una, nunca la misma dos veces seguidas.
-// Solo mientras suena música de menú (igual que en PC).
-const MENU_VOICE_INTERVAL = 25, MENU_VOICE_CHANCE = 0.15;
+// Vocecitas random de menú (assets/sounds/menu_voices): cada 20 s hay
+// 20% de chance de que suene una (en promedio, una cada ~1:40), nunca la
+// misma dos veces seguidas. Solo mientras suena música de menú.
+const MENU_VOICE_INTERVAL = 20, MENU_VOICE_CHANCE = 0.2;
 let menuVoiceTimer = MENU_VOICE_INTERVAL, lastMenuVoice = null;
 export function tickMenuVoices(dt) {
   if (audio.musicCategory !== "menu" || !DB.menuVoices.length || audio.muted) return;
