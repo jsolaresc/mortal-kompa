@@ -90,6 +90,9 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "MKAndroid");
 
         web.loadUrl(startUrl(getIntent()));
+        // el APK de la última actualización ya se instaló (por eso se está
+        // abriendo esta versión): no tiene sentido que siga ocupando lugar
+        new Thread(this::deleteOldApks).start();
     }
 
     /** "phone" en el APK normal; la versión de Google TV (TvActivity) dice "tv". */
@@ -134,9 +137,7 @@ public class MainActivity extends Activity {
             DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
             String safe = name.replaceAll("[^A-Za-z0-9._-]", "_");
             if (!safe.endsWith(".apk")) safe = safe + ".apk";
-            File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            File old = new File(dir, safe);
-            if (old.exists()) old.delete();
+            deleteOldApks();   // cada actualización bajada ocupa ~90 MB: no se guardan
             DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url))
                     .setTitle("Mortal Kompa")
                     .setDescription("Descargando " + safe)
@@ -160,6 +161,16 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             openExternal(url);
         }
+    }
+
+    /** Borra los APK de actualizaciones anteriores (ya instaladas). */
+    private void deleteOldApks() {
+        try {
+            File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            File[] files = dir != null ? dir.listFiles() : null;
+            if (files == null) return;
+            for (File f : files) if (f.getName().toLowerCase().endsWith(".apk")) f.delete();
+        } catch (Exception e) { /* nada */ }
     }
 
     private void installUpdate(long id, String url) {
